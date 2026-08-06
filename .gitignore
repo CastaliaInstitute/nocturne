@@ -1,0 +1,23 @@
+# Build artifacts
+build/
+bin/
+out/
+.cache/
+
+# Logs
+*.log
+
+# IDE and OS files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Tooling
+node_modules/
+__pycache__/
+*.pyc
+
+# ESP-IDF / embedded artifacts
+sdkconfig
+sdkconfig.old
