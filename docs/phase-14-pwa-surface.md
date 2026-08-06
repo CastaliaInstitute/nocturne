@@ -16,10 +16,11 @@
 - Offline UX hardening:
   - service worker registration
   - offline snapshot generation
+- Deployment readiness checks:
+  - added CI workflow `pwa-smoke` with static artifact validation and optional host check.
 
 ## Not yet implemented
 
 - Real `nocturne.castalia.institute` service-account provisioning and DNS configuration.
 - Hosted backend for token exchange and permission scoping.
-- Dedicated deployment pipeline and automated smoke tests for hosted endpoint.
 - Repository file browsing + activity UI is currently read-only metadata only.

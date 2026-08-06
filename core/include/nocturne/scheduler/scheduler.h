@@ -51,6 +51,9 @@ typedef struct {
 typedef struct {
     nocturne_scheduler_profile_t profile;
     nocturne_scheduler_mode_t mode;
+    uint32_t phase_id;
+    uint64_t phase_started_ms;
+    uint64_t phase_length_ms;
     float smoothed_event_density;
     float smoothed_loudness;
     float smoothed_high_frequency_content;
@@ -60,6 +63,7 @@ typedef struct {
     uint64_t cycle;
     uint64_t interruption_until_ms;
     uint32_t interrupts;
+    float phase_progress;
 } nocturne_scheduler_state_t;
 
 typedef struct {
@@ -139,6 +143,10 @@ static inline nocturne_scheduler_state_t nocturne_scheduler_state_init(nocturne_
     memset(&state, 0, sizeof(state));
     state.mode = mode;
     state.profile = nocturne_scheduler_profile_for(mode);
+    state.phase_id = 0;
+    state.phase_started_ms = 0;
+    state.phase_length_ms = 0;
+    state.phase_progress = 0.0f;
     state.interruption_until_ms = 0;
     if (seed_frame) {
         state.smoothed_event_density = seed_frame->intent.event_activity;
@@ -161,6 +169,64 @@ static inline float nocturne_scheduler_signature(const nocturne_scheduler_plan_t
          + plan->target_surprise
          + plan->safety_margin) * 0.2f
     );
+}
+
+static inline bool nocturne_scheduler_set_phase(
+    nocturne_scheduler_state_t* state,
+    uint64_t now_ms,
+    uint32_t phase_id,
+    uint64_t phase_length_ms
+) {
+    if (!state) {
+        return false;
+    }
+    if (phase_length_ms == 0) {
+        state->phase_id = phase_id;
+        state->phase_length_ms = 0;
+        state->phase_started_ms = now_ms;
+        state->phase_progress = 0.0f;
+        return true;
+    }
+
+    if (state->phase_length_ms == 0 || state->phase_id != phase_id) {
+        state->phase_id = phase_id;
+        state->phase_length_ms = phase_length_ms;
+        state->phase_started_ms = now_ms;
+        state->phase_progress = 0.0f;
+        return true;
+    }
+
+    if (state->phase_length_ms != phase_length_ms) {
+        state->phase_length_ms = phase_length_ms;
+        if (now_ms < state->phase_started_ms) {
+            state->phase_started_ms = now_ms;
+            state->phase_progress = 0.0f;
+        } else {
+            const uint64_t elapsed_ms = now_ms - state->phase_started_ms;
+            if (elapsed_ms >= phase_length_ms) {
+                const uint64_t remainder = elapsed_ms % phase_length_ms;
+                state->phase_started_ms = now_ms - remainder;
+                state->phase_progress = (float)(remainder) / (float)phase_length_ms;
+            } else {
+                state->phase_progress = (float)elapsed_ms / (float)phase_length_ms;
+            }
+        }
+        return false;
+    }
+
+    if (now_ms >= state->phase_started_ms) {
+        const uint64_t elapsed_ms = now_ms - state->phase_started_ms;
+        if (elapsed_ms >= state->phase_length_ms) {
+            const uint64_t loops = elapsed_ms / state->phase_length_ms;
+            state->phase_id = state->phase_id + (uint32_t)loops;
+            const uint64_t remainder_ms = elapsed_ms % state->phase_length_ms;
+            state->phase_started_ms += loops * state->phase_length_ms;
+            state->phase_progress = (float)remainder_ms / (float)state->phase_length_ms;
+            return true;
+        }
+        state->phase_progress = (float)elapsed_ms / (float)state->phase_length_ms;
+    }
+    return false;
 }
 
 static inline nocturne_scheduler_plan_t nocturne_scheduler_schedule_once(
@@ -188,12 +254,15 @@ static inline nocturne_scheduler_plan_t nocturne_scheduler_schedule_once(
         return plan;
     }
 
-    state->cycle += 1;
     if (frame->last_update_ms > state->monotonic_ms) {
         state->monotonic_ms = frame->last_update_ms;
     }
     if (now_ms > 0) {
         state->monotonic_ms = now_ms;
+    }
+    state->cycle += 1;
+    if (state->phase_length_ms > 0) {
+        (void)nocturne_scheduler_set_phase(state, state->monotonic_ms, state->phase_id, state->phase_length_ms);
     }
 
     const float motion = frame->intent.motion;
@@ -228,6 +297,14 @@ static inline nocturne_scheduler_plan_t nocturne_scheduler_schedule_once(
     plan.target_high_frequency_content = nocturne_scheduler_clamp01(mapped_hf > cap_hf ? cap_hf : mapped_hf);
     plan.target_novelty_gain = nocturne_scheduler_clamp01(mapped_novelty > cap_novelty ? cap_novelty : mapped_novelty);
     plan.target_surprise = nocturne_scheduler_clamp01(mapped_surprise > cap_surprise ? cap_surprise : mapped_surprise);
+
+    if (state->phase_id > 0 && state->phase_progress >= 0.95f) {
+        plan.target_event_density *= 0.85f;
+        plan.target_high_frequency_content *= 0.90f;
+        if (plan.reason[0] != '\0') {
+            (void)strncat(plan.reason, ", phase_tail_softening", sizeof(plan.reason) - strlen(plan.reason) - 1);
+        }
+    }
 
     const float blend_alpha = state->profile.continuity_rate;
     state->smoothed_event_density = (state->smoothed_event_density * blend_alpha) + (plan.target_event_density * (1.0f - blend_alpha));
@@ -267,6 +344,10 @@ static inline nocturne_scheduler_plan_t nocturne_scheduler_schedule_once(
     plan.continuity = 1.0f - (1.0f - state->smoothed_event_density) * 0.25f;
     plan.safety_margin = 1.0f - plan.target_high_frequency_content;
     plan.fallback_used = false;
+    plan.timer_seconds = plan.timer_seconds + (state->phase_progress * 0.10f);
+    if (plan.timer_seconds > state->profile.timer_max_ms / 1000.0f) {
+        plan.timer_seconds = state->profile.timer_max_ms / 1000.0f;
+    }
 
     if (!plan.reason[0]) {
         (void)strncpy(plan.reason, "scheduler_ok", sizeof(plan.reason) - 1);

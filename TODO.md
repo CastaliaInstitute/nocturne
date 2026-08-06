@@ -72,9 +72,9 @@ Top-level completion condition: treat this repository as "ready for production r
 - [x] Define intent-to-policy mapping rules
 - [x] Implement scheduler for event density and pacing
 - [x] Add safety envelopes for loudness, high-frequency content, and novelty
-- [ ] Implement sleep-safe mode with reduced surprise behavior
-- [ ] Implement transition management with continuity constraints
-- [ ] Add timer, phase, and interruption handling
+- [x] Implement sleep-safe mode with reduced surprise behavior
+- [x] Implement transition management with continuity constraints
+- [x] Add timer, phase, and interruption handling
 - [x] Add fallback scheduling behavior for missing intent
 - [x] Add deterministic scheduler traces for reproducibility
 - [ ] Add scheduler unit tests and scenario tests
@@ -201,7 +201,7 @@ Top-level completion condition: treat this repository as "ready for production r
 - [x] Add consent dialogs for BLE and sensor operations
 - [x] Harden offline mode and install UX
 - [x] Add onboarding and troubleshooting docs for first-time setup
-- [ ] Add app deployment pipeline and smoke tests
+- [x] Add app deployment pipeline and smoke tests
 
 ## Tracking
 

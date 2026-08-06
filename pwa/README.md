@@ -26,6 +26,8 @@ storage policies.
 ## Deployment and smoke checks
 
 - Host at `https://nocturne.castalia.institute` with HTTPS.
+- CI smoke check: `scripts/pwa-smoke.mjs` is now run by `.github/workflows/ci.yml` via `pwa-smoke`.
+- Set `vars.NOCTURNE_PWA_URL` in GitHub Actions to enable live hosted URL verification.
 - Smoke checklist:
   - Open app and click **Register Service Worker**.
   - Turn off network and reload to validate cached shell availability.
@@ -57,4 +59,4 @@ Bluetooth support.
 
 ## Missing assets
 
-- `icon-192.png` and `icon-512.png` placeholders are required before production.
+- Replace placeholder `icon-192.png` and `icon-512.png` with production-grade branding assets before production launch.

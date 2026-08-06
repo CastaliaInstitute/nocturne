@@ -12,11 +12,11 @@ to constrained playback policy.
   - high-frequency content (`max_high_frequency_ratio`)
   - novelty gain (`max_novelty_gain`)
 - Added sleep-safe reduction path and continuity smoothing for transitions.
-- Added timer generation hooks (in seconds) and interruption hold behavior.
+- Added timer generation hooks (in seconds), phase tracking, and interruption hold behavior.
 - Added deterministic, replayable scheduler trace entries with ring-buffer replay APIs.
+- Added phase lifecycle tracking (`phase_id`, `phase_started_ms`, `phase_length_ms`, `phase_progress`) with automatic cadence wrap handling.
 
 ## Open items in this phase
 
-- Timer/phase lifecycle handlers for external session clocks.
-- Formal interruption source hooks (gesture, app lifecycle, and stream interruption inputs).
+- Formal interruption source hooks (gesture, app lifecycle, and stream interruption) for stronger provenance.
 - Cross-module tests for scheduler edge cases and missing-intent fallback behavior.

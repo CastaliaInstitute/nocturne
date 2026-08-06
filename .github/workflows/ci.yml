@@ -5,10 +5,16 @@ on:
     branches: ["main"]
   pull_request:
     branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   docs:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
       - name: Check required repository files
@@ -22,3 +28,21 @@ jobs:
           test -f docs/glossary.md
           test -f pwa/index.html
           test -f pwa/app.js
+          test -f pwa/styles.css
+          test -f pwa/manifest.webmanifest
+          test -f pwa/service-worker.js
+
+  pwa-smoke:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Run PWA smoke checks
+        env:
+          NOCTURNE_PWA_URL: ${{ vars.NOCTURNE_PWA_URL }}
+        run: node scripts/pwa-smoke.mjs
