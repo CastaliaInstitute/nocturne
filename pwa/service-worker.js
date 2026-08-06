@@ -1,4 +1,4 @@
-const CACHE_NAME = 'nocturne-pwa-v2';
+const CACHE_NAME = 'nocturne-pwa-v4';
 const CACHE_ASSETS = [
   './',
   './index.html',
@@ -27,10 +27,20 @@ self.addEventListener('activate', (event) => {
   );
 });
 
+// Network-first for the app shell so new deploys reach clients immediately;
+// the cache serves as the offline fallback.
 self.addEventListener('fetch', (event) => {
   const req = event.request;
   if (req.method !== 'GET') return;
   event.respondWith(
-    caches.match(req).then((resp) => resp || fetch(req))
+    fetch(req)
+      .then((resp) => {
+        if (resp.ok && new URL(req.url).origin === self.location.origin) {
+          const copy = resp.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(req, copy));
+        }
+        return resp;
+      })
+      .catch(() => caches.match(req))
   );
 });

@@ -1,5 +1,53 @@
 const els = {};
 
+// Castalia identity is Supabase-backed (Google / GitHub / email magic link).
+// No credentials are ever typed into this app. The Supabase client config is
+// loaded at runtime from the shared Castalia config script (see index.html),
+// so this app never duplicates keys and picks up rotations automatically.
+function supabaseConfig() {
+  const url = window.CASTALIA_SUPABASE_URL || window.BIBLIOTECH_SUPABASE_URL || '';
+  const key = window.CASTALIA_SUPABASE_ANON_KEY || window.BIBLIOTECH_SUPABASE_ANON_KEY || '';
+  return url && key ? { url, key } : null;
+}
+
+// Fetch the shared config as plain text and extract the two public values.
+// Parsed as data — never executed. Cached for offline reuse.
+const SHARED_CONFIG_URL = 'https://bibliotech.castalia.institute/config.js';
+const SHARED_CONFIG_CACHE_KEY = 'nocturne-castalia-config';
+
+function applySharedConfigText(text) {
+  const url = text.match(/SUPABASE_URL\s*=\s*["']([^"']+)["']/);
+  const key = text.match(/SUPABASE_ANON_KEY\s*=\s*["']([^"']+)["']/);
+  if (url && key) {
+    window.CASTALIA_SUPABASE_URL = url[1];
+    window.CASTALIA_SUPABASE_ANON_KEY = key[1];
+    return true;
+  }
+  return false;
+}
+
+async function loadSharedConfig() {
+  if (supabaseConfig()) {
+    return;
+  }
+  const cached = localStorage.getItem(SHARED_CONFIG_CACHE_KEY);
+  if (cached && applySharedConfigText(cached)) {
+    return;
+  }
+  try {
+    const response = await fetch(SHARED_CONFIG_URL);
+    if (!response.ok) {
+      return;
+    }
+    const text = await response.text();
+    if (applySharedConfigText(text)) {
+      localStorage.setItem(SHARED_CONFIG_CACHE_KEY, text);
+    }
+  } catch {
+    // Offline or config host unavailable; auth actions will report status.
+  }
+}
+
 const PERMISSION_STATE = Object.freeze({
   SIGNED_OUT: 'signed_out',
   AUTHENTICATED: 'authenticated',
@@ -8,19 +56,46 @@ const PERMISSION_STATE = Object.freeze({
   FULL_ACCESS: 'full_access',
 });
 
-const ALLOWED_REMOTE_HOSTS = Object.freeze([
-  'api.github.com',
-  'api.castalia.institute',
-]);
+function allowedRemoteHosts() {
+  const hosts = ['api.github.com', 'api.castalia.institute'];
+  const config = supabaseConfig();
+  if (config) {
+    try {
+      hosts.push(new URL(config.url).hostname);
+    } catch {
+      // ignore malformed config URL
+    }
+  }
+  return hosts;
+}
+
+const SESSION_KEY = 'nocturne-supabase-session';
 
 const LOCAL_DATA_KEYS = [
+  SESSION_KEY,
   'nocturne-pwa-session',
   'nocturne-offline-snapshot',
 ];
 
+const state = {
+  username: '',
+  email: '',
+  session: null, // {access_token, refresh_token, expires_at, provider_token, user}
+  repo: null,
+  repoOwner: 'CastaliaInstitute',
+  bleDevice: null,
+  repoFiles: [],
+  repoCommits: [],
+  consentData: false,
+  consentBle: false,
+  permissionState: PERMISSION_STATE.SIGNED_OUT,
+};
+
+// ---------------------------------------------------------------------------
 // Shared identity cookie: lets any *.castalia.institute app pick up an
-// existing Castalia login. Holds identity + Castalia session token only —
-// never the raw provider PAT, which stays in this origin's localStorage.
+// existing Castalia login. Holds identity + Castalia session token only.
+// ---------------------------------------------------------------------------
+
 const CASTALIA_COOKIE = 'castalia_identity';
 
 function castaliaCookieDomain() {
@@ -36,7 +111,7 @@ function writeCastaliaCookie() {
   }
   const payload = btoa(JSON.stringify({
     u: state.username,
-    s: state.sessionToken || '',
+    s: state.session ? state.session.access_token : '',
     t: Date.now(),
   }));
   const domain = castaliaCookieDomain();
@@ -84,39 +159,235 @@ function adoptSharedIdentity() {
     return;
   }
   state.username = shared.username;
-  state.sessionToken = shared.sessionToken;
-  if (els.username) {
-    els.username.value = state.username;
+  if (shared.sessionToken) {
+    state.session = { access_token: shared.sessionToken, shared: true };
   }
-  setAuthenticated();
-  applyConsentGating();
   setStatus(els.authStatus, `Connected as ${state.username} (shared Castalia session)`);
   logLine(`Adopted shared Castalia identity: ${state.username}`);
 }
 
-const state = {
-  username: '',
-  token: '',
-  sessionToken: '',
-  repo: null,
-  repoOwner: 'CastaliaInstitute',
-  bleDevice: null,
-  repoFiles: [],
-  repoCommits: [],
-  consentData: false,
-  consentBle: false,
-  permissionState: PERMISSION_STATE.SIGNED_OUT,
-};
+// ---------------------------------------------------------------------------
+// Supabase auth (implicit flow, no SDK): Google, GitHub, email magic link.
+// ---------------------------------------------------------------------------
+
+function requireSupabase() {
+  const config = supabaseConfig();
+  if (!config) {
+    setStatus(els.authStatus, 'Castalia auth config unavailable (offline?)');
+    return null;
+  }
+  return config;
+}
+
+function supabaseHeaders(config, withAuth) {
+  const headers = { apikey: config.key, 'Content-Type': 'application/json' };
+  if (withAuth && state.session) {
+    headers.Authorization = `Bearer ${state.session.access_token}`;
+  }
+  return headers;
+}
+
+function usernameFromUser(user) {
+  if (!user) return '';
+  const meta = user.user_metadata || {};
+  return (
+    meta.user_name ||
+    meta.preferred_username ||
+    (user.email ? user.email.split('@')[0] : '') ||
+    ''
+  );
+}
+
+function beginOAuth(provider) {
+  const config = requireSupabase();
+  if (!config) return;
+  const redirect = encodeURIComponent(`${window.location.origin}/`);
+  window.location.href =
+    `${config.url}/auth/v1/authorize?provider=${provider}&redirect_to=${redirect}`;
+}
+
+async function sendMagicLink(email) {
+  const config = requireSupabase();
+  if (!config) {
+    throw new Error('auth config unavailable');
+  }
+  const redirect = encodeURIComponent(`${window.location.origin}/`);
+  const response = await fetch(`${config.url}/auth/v1/otp?redirect_to=${redirect}`, {
+    method: 'POST',
+    headers: supabaseHeaders(config, false),
+    body: JSON.stringify({ email, create_user: true }),
+  });
+  if (!response.ok) {
+    const body = await response.text();
+    throw new Error(`magic link request failed (${response.status}): ${body.slice(0, 160)}`);
+  }
+}
+
+function parseAuthRedirectHash() {
+  const hash = window.location.hash.replace(/^#/, '');
+  if (!hash || !hash.includes('access_token=')) {
+    return null;
+  }
+  const params = new URLSearchParams(hash);
+  const accessToken = params.get('access_token');
+  if (!accessToken) {
+    return null;
+  }
+  const expiresIn = parseInt(params.get('expires_in') || '3600', 10);
+  return {
+    access_token: accessToken,
+    refresh_token: params.get('refresh_token') || '',
+    provider_token: params.get('provider_token') || '',
+    expires_at: Math.floor(Date.now() / 1000) + expiresIn,
+  };
+}
+
+async function fetchSupabaseUser() {
+  const config = requireSupabase();
+  if (!config) {
+    throw new Error('auth config unavailable');
+  }
+  const response = await fetch(`${config.url}/auth/v1/user`, {
+    headers: supabaseHeaders(config, true),
+  });
+  if (!response.ok) {
+    throw new Error(`user lookup failed (${response.status})`);
+  }
+  return response.json();
+}
+
+async function refreshSupabaseSession() {
+  const config = supabaseConfig();
+  if (!config || !state.session || !state.session.refresh_token) {
+    return false;
+  }
+  try {
+    const response = await fetch(`${config.url}/auth/v1/token?grant_type=refresh_token`, {
+      method: 'POST',
+      headers: supabaseHeaders(config, false),
+      body: JSON.stringify({ refresh_token: state.session.refresh_token }),
+    });
+    if (!response.ok) {
+      return false;
+    }
+    const data = await response.json();
+    state.session = {
+      access_token: data.access_token,
+      refresh_token: data.refresh_token || state.session.refresh_token,
+      provider_token: state.session.provider_token || '',
+      expires_at: Math.floor(Date.now() / 1000) + (data.expires_in || 3600),
+      user: data.user || state.session.user,
+    };
+    saveSession();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function completeSignIn(session) {
+  state.session = session;
+  try {
+    const user = await fetchSupabaseUser();
+    state.session.user = user;
+    state.username = usernameFromUser(user);
+    state.email = user.email || '';
+  } catch (error) {
+    logLine(`User lookup failed: ${error.message}`);
+  }
+  saveSession();
+  writeCastaliaCookie();
+  setAuthenticated();
+  applyConsentGating();
+  updateConnectButton();
+}
+
+async function handleAuthRedirect() {
+  const session = parseAuthRedirectHash();
+  if (!session) {
+    return false;
+  }
+  window.history.replaceState(null, '', window.location.pathname + window.location.search);
+  await completeSignIn(session);
+  logLine('Signed in via Castalia (Supabase)');
+  openDrawer();
+  return true;
+}
+
+// ---------------------------------------------------------------------------
+// Local session persistence
+// ---------------------------------------------------------------------------
+
+function loadSession() {
+  const raw = localStorage.getItem(SESSION_KEY);
+  if (!raw) {
+    return;
+  }
+  try {
+    const stored = JSON.parse(raw);
+    if (!stored || !stored.access_token) {
+      return;
+    }
+    state.session = stored;
+    state.username = usernameFromUser(stored.user);
+    state.email = stored.user ? stored.user.email || '' : '';
+    state.consentData = !!stored.consentData;
+    state.consentBle = !!stored.consentBle;
+    if (els.consentData) els.consentData.checked = state.consentData;
+    if (els.consentBle) els.consentBle.checked = state.consentBle;
+
+    const now = Math.floor(Date.now() / 1000);
+    if (stored.expires_at && stored.expires_at < now + 60) {
+      refreshSupabaseSession().then((ok) => {
+        if (ok) {
+          setAuthenticated();
+          applyConsentGating();
+          updateConnectButton();
+        } else {
+          logLine('Stored Castalia session expired');
+        }
+      });
+    }
+    if (state.username) {
+      setAuthenticated();
+    }
+  } catch (error) {
+    logLine(`Failed to parse cached session: ${error.message}`);
+  }
+}
+
+function saveSession() {
+  if (!state.session) {
+    return;
+  }
+  localStorage.setItem(SESSION_KEY, JSON.stringify({
+    ...state.session,
+    consentData: state.consentData,
+    consentBle: state.consentBle,
+  }));
+}
+
+function clearSession() {
+  localStorage.removeItem(SESSION_KEY);
+  localStorage.removeItem('nocturne-pwa-session');
+  clearCastaliaCookie();
+  resetUiAfterSessionReset();
+  updateConnectButton();
+}
+
+// ---------------------------------------------------------------------------
+// UI wiring
+// ---------------------------------------------------------------------------
 
 function init() {
-  els.loginForm = document.getElementById('login-form');
-  els.username = document.getElementById('username');
-  els.token = document.getElementById('token');
+  els.magicForm = document.getElementById('magic-form');
+  els.email = document.getElementById('email');
+  els.googleSignin = document.getElementById('google-signin');
+  els.githubSignin = document.getElementById('github-signin');
   els.consentData = document.getElementById('consent-castalia-data');
   els.consentBle = document.getElementById('consent-ble');
   els.authStatus = document.getElementById('auth-status');
   els.permissionStatus = document.getElementById('permission-status');
-  els.exchangeToken = document.getElementById('exchange-token');
   els.logout = document.getElementById('logout');
   els.repoStatus = document.getElementById('repo-status');
   els.repoList = document.getElementById('repo-list');
@@ -135,14 +406,15 @@ function init() {
   els.exportData = document.getElementById('export-data');
   els.deleteData = document.getElementById('delete-data');
 
-  els.loginForm.addEventListener('submit', onLogin);
+  els.googleSignin.addEventListener('click', () => beginOAuth('google'));
+  els.githubSignin.addEventListener('click', () => beginOAuth('github'));
+  els.magicForm.addEventListener('submit', onSendMagicLink);
   els.discoverRepo.addEventListener('click', onDiscoverRepo);
   els.openRepo.addEventListener('click', onOpenRepo);
   els.listRepoFiles.addEventListener('click', onListRepoFiles);
   els.listRecentChanges.addEventListener('click', onListRecentChanges);
   els.connectDevice.addEventListener('click', onConnectDevice);
   els.disconnectDevice.addEventListener('click', onDisconnectDevice);
-  els.exchangeToken.addEventListener('click', onExchangeToken);
   els.logout.addEventListener('click', onLogout);
   els.testOffline.addEventListener('click', onOfflineTest);
   els.registerSw.addEventListener('click', onRegisterServiceWorker);
@@ -153,9 +425,15 @@ function init() {
 
   initDrawer();
   loadSession();
-  adoptSharedIdentity();
-  onConsentChanged();
-  updateConnectButton();
+  loadSharedConfig()
+    .then(() => handleAuthRedirect())
+    .then((signedIn) => {
+      if (!signedIn) {
+        adoptSharedIdentity();
+      }
+      onConsentChanged();
+      updateConnectButton();
+    });
   autoRegisterServiceWorker();
 }
 
@@ -180,13 +458,14 @@ function initDrawer() {
 function openDrawer() {
   if (!els.drawer) return;
   els.drawerBackdrop.hidden = false;
-  requestAnimationFrame(() => {
-    els.drawerBackdrop.classList.add('visible');
-    els.drawer.classList.add('open');
-  });
+  // Force a reflow so the un-hidden backdrop transitions cleanly, then add
+  // classes synchronously (rAF would stall in hidden/background tabs).
+  void els.drawerBackdrop.offsetHeight;
+  els.drawerBackdrop.classList.add('visible');
+  els.drawer.classList.add('open');
   els.drawer.setAttribute('aria-hidden', 'false');
-  if (!state.username && els.username) {
-    els.username.focus();
+  if (!state.username && els.email) {
+    els.email.focus();
   }
 }
 
@@ -261,8 +540,8 @@ function clearLocalData() {
 
 function resetUiAfterSessionReset() {
   state.username = '';
-  state.token = '';
-  state.sessionToken = '';
+  state.email = '';
+  state.session = null;
   state.permissionState = PERMISSION_STATE.SIGNED_OUT;
   state.repo = null;
   state.repoFiles = [];
@@ -282,8 +561,8 @@ function resetUiAfterSessionReset() {
   if (els.consentBle) {
     els.consentBle.checked = false;
   }
-  if (els.loginForm) {
-    els.loginForm.reset();
+  if (els.magicForm) {
+    els.magicForm.reset();
   }
   els.repoList.textContent = 'Files: none yet.';
   els.repoCommits.textContent = 'Recent commits: none yet.';
@@ -302,105 +581,38 @@ function logLine(message) {
   els.log.textContent = `${now} ${message}\n${els.log.textContent}`;
 }
 
-function loadSession() {
-  const raw = localStorage.getItem('nocturne-pwa-session');
-  if (!raw) {
-    return;
-  }
-  try {
-    const session = JSON.parse(raw);
-    state.username = session.username || '';
-    state.token = session.token || '';
-    state.sessionToken = session.sessionToken || '';
-    state.consentData = !!session.consentData;
-    state.consentBle = !!session.consentBle;
-    if (state.username) {
-      els.username.value = state.username;
-      els.token.value = state.token;
-      els.consentData.checked = state.consentData;
-      els.consentBle.checked = state.consentBle;
-      setAuthenticated();
-      onLoginStateUpdated();
-    }
-  } catch (error) {
-    logLine(`Failed to parse cached session: ${error.message}`);
-  }
-}
-
-function saveSession() {
-  localStorage.setItem(
-    'nocturne-pwa-session',
-    JSON.stringify({
-      username: state.username,
-      token: state.token,
-      sessionToken: state.sessionToken,
-      consentData: state.consentData,
-      consentBle: state.consentBle,
-    })
-  );
-}
-
-function clearSession() {
-  localStorage.removeItem('nocturne-pwa-session');
-  clearCastaliaCookie();
-  resetUiAfterSessionReset();
-  updateConnectButton();
-}
-
 function setAuthenticated() {
-  setStatus(els.authStatus, `Connected as ${state.username}`);
-  els.exchangeToken.disabled = false;
+  const label = state.email && state.email !== state.username
+    ? `${state.username} (${state.email})`
+    : state.username;
+  setStatus(els.authStatus, `Connected as ${label}`);
   applyConsentGating();
 }
 
-function onLogin(event) {
+async function onSendMagicLink(event) {
   event.preventDefault();
-  state.username = (els.username.value || '').trim();
-  state.token = (els.token.value || '').trim();
-  if (!state.username || !state.token) {
-    setStatus(els.authStatus, 'Missing username or token.');
+  const email = (els.email.value || '').trim();
+  if (!email) {
+    setStatus(els.authStatus, 'Enter an email for the magic link.');
     return;
   }
-  const clean = state.username.toLowerCase().replace(/^castalia-/, '');
-  if (clean !== state.username) {
-    state.username = clean;
-    els.username.value = clean;
+  setStatus(els.authStatus, 'Sending magic link...');
+  try {
+    await sendMagicLink(email);
+    setStatus(els.authStatus, `Magic link sent to ${email}. Open it on this device.`);
+    logLine(`Magic link requested for ${email}`);
+  } catch (error) {
+    setStatus(els.authStatus, `Magic link failed: ${error.message}`);
+    logLine(`Magic link failed: ${error.message}`);
   }
-  state.consentData = els.consentData.checked;
-  state.consentBle = els.consentBle.checked;
-  saveSession();
-  writeCastaliaCookie();
-  setAuthenticated();
-  onLoginStateUpdated();
-  updateConnectButton();
-}
-
-function onLoginStateUpdated() {
-  applyConsentGating();
-  setStatus(els.repoStatus, `Ready to resolve castalia-${state.username}`);
-  setStatus(els.bleStatus, state.bleDevice ? `Connected: ${state.bleDevice.name}` : 'No connected device');
-  setStatus(els.authStatus, `Connected as ${state.username}`);
 }
 
 function getAuthToken() {
-  return state.sessionToken || state.token;
+  return state.session ? state.session.access_token : '';
 }
 
-function getExchangeEndpoint() {
-  return 'https://api.castalia.institute/nocturne/token-exchange';
-}
-
-function buildGithubEndpoint(path) {
-  return `https://api.github.com/${String(path || '').replace(/^\/+/, '')}`;
-}
-
-function isAllowedNetworkTarget(urlString) {
-  try {
-    const parsed = new URL(urlString);
-    return ALLOWED_REMOTE_HOSTS.includes(parsed.hostname);
-  } catch {
-    return false;
-  }
+function getProviderToken() {
+  return state.session ? state.session.provider_token || '' : '';
 }
 
 function formatPermissionState() {
@@ -437,7 +649,7 @@ function enforcePermissionState() {
 
 function requirePermission(context) {
   if (!state.username || !getAuthToken()) {
-    setStatus(els.authStatus, 'Authentication required');
+    setStatus(els.authStatus, 'Sign in with Castalia first');
     return false;
   }
   if (context === 'repo' && !state.consentData) {
@@ -465,7 +677,6 @@ function applyConsentGating() {
   els.listRepoFiles.disabled = !repoEnabled || !state.repo;
   els.listRecentChanges.disabled = !repoEnabled || !state.repo;
   els.connectDevice.disabled = !bleEnabled;
-  els.exchangeToken.disabled = !hasAuth;
   enforcePermissionState();
 }
 
@@ -473,9 +684,41 @@ function onConsentChanged() {
   state.consentData = !!els.consentData.checked;
   state.consentBle = !!els.consentBle.checked;
   applyConsentGating();
-  if (state.username) {
+  if (state.session) {
     saveSession();
   }
+}
+
+// ---------------------------------------------------------------------------
+// Repo access. Preferred path: the Castalia workspace API with the Castalia
+// session JWT. Fallback: when signed in via GitHub OAuth, Supabase provides a
+// provider token that reads the per-user repo directly — still nothing typed.
+// ---------------------------------------------------------------------------
+
+function isAllowedNetworkTarget(urlString) {
+  try {
+    const parsed = new URL(urlString);
+    return allowedRemoteHosts().includes(parsed.hostname);
+  } catch {
+    return false;
+  }
+}
+
+async function castaliaGet(path) {
+  const url = `https://api.castalia.institute/nocturne/${String(path).replace(/^\/+/, '')}`;
+  if (!isAllowedNetworkTarget(url)) {
+    throw new Error(`Blocked network endpoint: ${url}`);
+  }
+  const response = await fetch(url, {
+    headers: {
+      Accept: 'application/json',
+      Authorization: `Bearer ${getAuthToken()}`,
+    },
+  });
+  if (!response.ok) {
+    throw new Error(`${response.status} ${response.statusText}`);
+  }
+  return response.json();
 }
 
 async function githubGet(url, token) {
@@ -505,7 +748,7 @@ function formatRepoListLines(items) {
   }
   const lines = [];
   for (const it of items) {
-    lines.push(`${it.type.padEnd(7)} ${(it.name || '(unknown)').padEnd(28)} ${it.path || ''}`);
+    lines.push(`${(it.type || 'file').padEnd(7)} ${(it.name || '(unknown)').padEnd(28)} ${it.path || ''}`);
   }
   return lines.join('\n');
 }
@@ -517,10 +760,10 @@ function formatCommitLines(commits) {
   return commits
     .map((commit) => {
       const sha = commit.sha ? commit.sha.substring(0, 7) : '------';
-      const msg = commit.commit?.message || '(no message)';
-      const actor = commit.author?.login || commit.commit?.author?.name || 'unknown';
-      const date = commit.commit?.author?.date || '';
-      return `${sha}  ${actor.padEnd(14)}  ${date ? new Date(date).toISOString() : 'n/a'}  ${msg}`;
+      const msg = commit.commit?.message || commit.message || '(no message)';
+      const actor = commit.author?.login || commit.commit?.author?.name || commit.author || 'unknown';
+      const date = commit.commit?.author?.date || commit.date || '';
+      return `${sha}  ${String(actor).padEnd(14)}  ${date ? new Date(date).toISOString() : 'n/a'}  ${msg}`;
     })
     .join('\n');
 }
@@ -530,12 +773,21 @@ async function onDiscoverRepo() {
     return;
   }
   els.discoverRepo.disabled = true;
-  const activeToken = getAuthToken();
   setStatus(els.repoStatus, 'Discovering repository...');
   const repoName = repoNameForUser(state.username);
   const repoSlug = `${state.repoOwner}/${repoName}`;
   try {
-    state.repo = await githubGet(buildGithubEndpoint(`/repos/${repoSlug}`), activeToken);
+    try {
+      state.repo = await castaliaGet('repo');
+    } catch {
+      const providerToken = getProviderToken();
+      if (!providerToken) {
+        throw new Error(
+          'Castalia workspace API unreachable. Sign in with GitHub to browse the repo directly.'
+        );
+      }
+      state.repo = await githubGet(`https://api.github.com/repos/${repoSlug}`, providerToken);
+    }
     els.openRepo.disabled = false;
     els.listRepoFiles.disabled = false;
     els.listRecentChanges.disabled = false;
@@ -561,11 +813,18 @@ async function onListRepoFiles() {
   }
   setStatus(els.repoStatus, 'Loading workspace files...');
   try {
-    const apiPath = buildGithubEndpoint(`/repos/${state.repo.full_name}/contents`);
-    const items = await githubGet(apiPath, getAuthToken());
+    let items;
+    try {
+      items = await castaliaGet('repo/files');
+    } catch {
+      const providerToken = getProviderToken();
+      if (!providerToken) {
+        throw new Error('workspace API unreachable; GitHub sign-in enables direct browsing');
+      }
+      items = await githubGet(`https://api.github.com/repos/${state.repo.full_name}/contents`, providerToken);
+    }
     state.repoFiles = Array.isArray(items) ? items : [];
-    const fileText = formatRepoListLines(state.repoFiles);
-    els.repoList.textContent = fileText;
+    els.repoList.textContent = formatRepoListLines(state.repoFiles);
     setStatus(els.repoStatus, `Loaded ${state.repoFiles.length} repo entry(ies)`);
   } catch (error) {
     setStatus(els.repoStatus, `Failed to load files: ${error.message}`);
@@ -579,8 +838,19 @@ async function onListRecentChanges() {
   }
   setStatus(els.repoStatus, 'Loading recent changes...');
   try {
-    const apiPath = buildGithubEndpoint(`/repos/${state.repo.full_name}/commits?per_page=5`);
-    const commits = await githubGet(apiPath, getAuthToken());
+    let commits;
+    try {
+      commits = await castaliaGet('repo/commits');
+    } catch {
+      const providerToken = getProviderToken();
+      if (!providerToken) {
+        throw new Error('workspace API unreachable; GitHub sign-in enables direct browsing');
+      }
+      commits = await githubGet(
+        `https://api.github.com/repos/${state.repo.full_name}/commits?per_page=5`,
+        providerToken
+      );
+    }
     state.repoCommits = Array.isArray(commits) ? commits : [];
     els.repoCommits.textContent = formatCommitLines(state.repoCommits);
     setStatus(els.repoStatus, `Loaded ${state.repoCommits.length} commit(s)`);
@@ -591,55 +861,20 @@ async function onListRecentChanges() {
 }
 
 function onLogout() {
+  const config = supabaseConfig();
+  if (config && getAuthToken() && !state.session?.shared) {
+    fetch(`${config.url}/auth/v1/logout`, {
+      method: 'POST',
+      headers: supabaseHeaders(config, true),
+    }).catch(() => {});
+  }
   clearSession();
   applyConsentGating();
 }
 
-async function onExchangeToken() {
-  if (!requirePermission('exchange')) {
-    setStatus(els.authStatus, 'Sign in before exchange');
-    return;
-  }
-
-  const exchangeEndpoint = getExchangeEndpoint();
-  setStatus(els.authStatus, 'Exchanging token with Castalia...');
-  if (!isAllowedNetworkTarget(exchangeEndpoint)) {
-    setStatus(els.authStatus, 'Exchange endpoint blocked by policy');
-    return;
-  }
-  try {
-    const response = await fetch(exchangeEndpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-      },
-      body: JSON.stringify({
-        actor: state.username,
-        provider: 'github',
-        access_token: state.token,
-      }),
-    });
-    if (!response.ok) {
-      throw new Error(`token exchange endpoint returned ${response.status}`);
-    }
-    const data = await response.json();
-    if (!data || typeof data.session_token !== 'string') {
-      throw new Error('token exchange response missing session_token');
-    }
-    state.sessionToken = data.session_token;
-    saveSession();
-    writeCastaliaCookie();
-    setStatus(els.authStatus, 'Castalia exchange succeeded');
-    logLine('Castalia token exchange succeeded');
-    setAuthenticated();
-  } catch (error) {
-    state.sessionToken = '';
-    setStatus(els.authStatus, `Exchange unavailable; using scoped PAT mode: ${error.message}`);
-    logLine(`Token exchange failed, fallback to PAT: ${error.message}`);
-    saveSession();
-  }
-}
+// ---------------------------------------------------------------------------
+// BLE, offline tools, service worker
+// ---------------------------------------------------------------------------
 
 async function onConnectDevice() {
   if (!requirePermission('ble')) {

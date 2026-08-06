@@ -43,24 +43,23 @@
 
       <section class="panel" id="auth-panel">
         <h2>Castalia Identity</h2>
-        <form id="login-form">
-          <label>
-            Castalia username
-            <input id="username" autocomplete="username" placeholder="castalia-janedoe" required />
-          </label>
-          <label>
-            Personal access token
-            <input id="token" autocomplete="current-password" type="password" placeholder="ghp_..." required />
-          </label>
-          <label>
-            <input type="checkbox" id="consent-castalia-data" />
-            I consent to loading Castalia repos and telemetry metadata only from my own scope.
-          </label>
-          <button type="submit">Connect to Castalia</button>
-        </form>
         <div class="row">
-          <button id="exchange-token" type="button" disabled>Exchange token with Castalia</button>
-          <button id="logout" type="button">Clear local session</button>
+          <button id="google-signin" type="button">Continue with Google</button>
+          <button id="github-signin" type="button">Continue with GitHub</button>
+        </div>
+        <form id="magic-form">
+          <label>
+            Email for magic link
+            <input id="email" type="email" autocomplete="email" placeholder="you@example.com" required />
+          </label>
+          <button type="submit">Send magic link</button>
+        </form>
+        <label>
+          <input type="checkbox" id="consent-castalia-data" />
+          I consent to loading Castalia repos and telemetry metadata only from my own scope.
+        </label>
+        <div class="row">
+          <button id="logout" type="button">Sign out</button>
         </div>
         <p id="auth-status" class="status">Not connected</p>
         <p id="permission-status" class="status">Permission: Signed out</p>

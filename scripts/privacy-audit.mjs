@@ -37,8 +37,20 @@ async function main() {
   const appJs = await readText('pwa/app.js');
   const indexHtml = await readText('pwa/index.html');
 
-  const allowedHosts = new Set(['api.github.com', 'api.castalia.institute']);
-  const allowedStorageKeys = new Set(['nocturne-pwa-session', 'nocturne-offline-snapshot']);
+  const allowedHosts = new Set([
+    'api.github.com',
+    'api.castalia.institute',
+    // Supabase-backed Castalia identity (Google / GitHub / magic link).
+    'pilmscrodlitdrygabvo.supabase.co',
+    // Canonical shared Castalia client config (public values, fetched as data).
+    'bibliotech.castalia.institute',
+  ]);
+  const allowedStorageKeys = new Set([
+    'nocturne-pwa-session',
+    'nocturne-offline-snapshot',
+    'nocturne-supabase-session',
+    'nocturne-castalia-config',
+  ]);
 
   const stringFetchCalls = [];
   const stringUrlCalls = [];
