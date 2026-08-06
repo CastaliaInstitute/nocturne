@@ -4,16 +4,16 @@ Top-level completion condition: treat this repository as "ready for production r
 
 ## Phase 0 — Foundation
 
-- [ ] Establish initial repository defaults
-- [ ] Define and enforce language/tooling policy
-- [ ] Add MIT license and contribution governance
-- [ ] Create docs and architecture spec publication structure
-- [ ] Add core design glossary (Acoustic Intent, Chronology, Context Domains)
-- [ ] Define semantic versioning and release cadence
-- [ ] Set up CI pipeline for lint/build/doc checks
-- [ ] Create project-wide issue and PR templates
-- [ ] Add CODEOWNERS and branch protections
-- [ ] Add changelog and release notes policy
+- [x] Establish initial repository defaults
+- [x] Define and enforce language/tooling policy
+- [x] Add MIT license and contribution governance
+- [x] Create docs and architecture spec publication structure
+- [x] Add core design glossary (Acoustic Intent, Chronology, Context Domains)
+- [x] Define semantic versioning and release cadence
+- [x] Set up CI pipeline for lint/build/doc checks
+- [x] Create project-wide issue and PR templates
+- [x] Add CODEOWNERS and branch protections
+- [x] Add changelog and release notes policy
 
 ## Phase 1 — Core Platform Data Models
 

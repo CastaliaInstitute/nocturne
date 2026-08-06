@@ -1,0 +1,24 @@
+name: CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check required repository files
+        run: |
+          set -euo pipefail
+          test -f README.md
+          test -f TODO.md
+          test -f LICENSE
+          test -f CHANGELOG.md
+          test -f docs/architecture/system-architecture-spec.md
+          test -f docs/glossary.md
+          test -f pwa/index.html
+          test -f pwa/app.js
