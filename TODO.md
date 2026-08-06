@@ -23,9 +23,9 @@ Top-level completion condition: treat this repository as "ready for production r
 - [x] Add deterministic random-seed and session-seed plumbing
 - [x] Implement context signal schemas for Observed, Computed, Symbolic, User domains
 - [x] Add input validation and saturation/smoothing utilities
-- [ ] Add temporal model with hierarchical chronology utilities
-- [ ] Add serialization format versioning for compatibility
-- [ ] Create golden-test fixtures for intent determinism
+- [x] Add temporal model with hierarchical chronology utilities
+- [x] Add serialization format versioning for compatibility
+- [x] Create golden-test fixtures for intent determinism
 - [x] Document all core data types in API docs
 
 ## Phase 2 — Context Adapter Layer

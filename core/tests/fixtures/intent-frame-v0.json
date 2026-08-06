@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 0,
+  "seed": 3054423980,
+  "sessionId": 1001,
+  "monotonicMs": 1234667,
+  "sourceDomain": "observed",
+  "intent": {
+    "grounding": 0.44,
+    "brightness": 0.54,
+    "warmth": 0.61,
+    "density": 0.31,
+    "motion": 0.39,
+    "spaciousness": 0.50,
+    "silence": 0.21,
+    "eventActivity": 0.12,
+    "harmonicTension": 0.36,
+    "novelty": 0.16
+  },
+  "influences": [
+    {"value": 0.44, "confidence": 0.9, "minBound": 0.0, "maxBound": 1.0, "provenanceWeight": 0.25},
+    {"value": 0.54, "confidence": 0.8, "minBound": 0.0, "maxBound": 1.0, "provenanceWeight": 0.20},
+    {"value": 0.61, "confidence": 0.7, "minBound": 0.0, "maxBound": 1.0, "provenanceWeight": 0.15},
+    {"value": 0.31, "confidence": 0.6, "minBound": 0.0, "maxBound": 1.0, "provenanceWeight": 0.40}
+  ]
+}
