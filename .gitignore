@@ -3,6 +3,7 @@ build/
 bin/
 out/
 .cache/
+.build/
 
 # Logs
 *.log

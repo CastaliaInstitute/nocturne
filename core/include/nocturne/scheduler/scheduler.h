@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <math.h>
 #include <string.h>
 #include "../context.h"
 #include "../fusion/fusion.h"
@@ -131,10 +132,39 @@ static inline bool nocturne_scheduler_frame_is_valid(const nocturne_fused_frame_
     }
     for (size_t i = 0; i < NOCTURNE_INTENT_DIMENSIONS; ++i) {
         const float value = ((const float*)&frame->intent)[i];
+        if (!isfinite(value)) {
+            return false;
+        }
         if (value < 0.0f || value > 1.0f) {
             return false;
         }
     }
+
+    for (size_t i = 0; i < NOCTURNE_INTENT_DIMENSIONS; ++i) {
+        const nocturne_influence_t* influence = &frame->influences[i];
+        if (!isfinite(influence->value)
+            || !isfinite(influence->confidence)
+            || !isfinite(influence->provenance_weight)
+            || !isfinite(influence->min_bound)
+            || !isfinite(influence->max_bound)) {
+            return false;
+        }
+        if (influence->value < 0.0f || influence->value > 1.0f) {
+            return false;
+        }
+        if (influence->confidence < 0.0f || influence->confidence > 1.0f) {
+            return false;
+        }
+        if (influence->provenance_weight < 0.0f || influence->provenance_weight > 1.0f) {
+            return false;
+        }
+        if (influence->min_bound > influence->max_bound
+            || influence->min_bound < 0.0f
+            || influence->max_bound > 1.0f) {
+            return false;
+        }
+    }
+
     return true;
 }
 

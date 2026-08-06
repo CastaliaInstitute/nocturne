@@ -16,6 +16,14 @@
 - Offline UX hardening:
   - service worker registration
   - offline snapshot generation
+- Local data controls:
+  - export local cache/session snapshot
+  - delete local data with explicit confirmation
+- Policy and privacy controls:
+  - consent-state machine with explicit permission transitions
+  - network allowlist enforcement for all outbound calls
+- Validation:
+  - privacy audit script (`scripts/privacy-audit.mjs`) now validates policy gates, storage minimization, and lint-like checks
 - Deployment readiness checks:
   - added CI workflow `pwa-smoke` with static artifact validation and optional host check.
 

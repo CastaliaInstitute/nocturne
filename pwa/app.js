@@ -1,4 +1,23 @@
 const els = {};
+
+const PERMISSION_STATE = Object.freeze({
+  SIGNED_OUT: 'signed_out',
+  AUTHENTICATED: 'authenticated',
+  DATA_CONSENT_GRANTED: 'data_consent_granted',
+  BLE_CONSENT_GRANTED: 'ble_consent_granted',
+  FULL_ACCESS: 'full_access',
+});
+
+const ALLOWED_REMOTE_HOSTS = Object.freeze([
+  'api.github.com',
+  'api.castalia.institute',
+]);
+
+const LOCAL_DATA_KEYS = [
+  'nocturne-pwa-session',
+  'nocturne-offline-snapshot',
+];
+
 const state = {
   username: '',
   token: '',
@@ -10,6 +29,7 @@ const state = {
   repoCommits: [],
   consentData: false,
   consentBle: false,
+  permissionState: PERMISSION_STATE.SIGNED_OUT,
 };
 
 function init() {
@@ -19,6 +39,7 @@ function init() {
   els.consentData = document.getElementById('consent-castalia-data');
   els.consentBle = document.getElementById('consent-ble');
   els.authStatus = document.getElementById('auth-status');
+  els.permissionStatus = document.getElementById('permission-status');
   els.exchangeToken = document.getElementById('exchange-token');
   els.logout = document.getElementById('logout');
   els.repoStatus = document.getElementById('repo-status');
@@ -35,6 +56,8 @@ function init() {
   els.disconnectDevice = document.getElementById('disconnect-device');
   els.testOffline = document.getElementById('test-offline');
   els.registerSw = document.getElementById('register-sw');
+  els.exportData = document.getElementById('export-data');
+  els.deleteData = document.getElementById('delete-data');
 
   els.loginForm.addEventListener('submit', onLogin);
   els.discoverRepo.addEventListener('click', onDiscoverRepo);
@@ -47,11 +70,80 @@ function init() {
   els.logout.addEventListener('click', onLogout);
   els.testOffline.addEventListener('click', onOfflineTest);
   els.registerSw.addEventListener('click', onRegisterServiceWorker);
+  els.exportData.addEventListener('click', onExportData);
+  els.deleteData.addEventListener('click', onDeleteData);
   els.consentData.addEventListener('change', onConsentChanged);
   els.consentBle.addEventListener('change', onConsentChanged);
 
   loadSession();
   onConsentChanged();
+}
+
+function gatherStoredValue(key) {
+  const raw = localStorage.getItem(key);
+  if (raw === null) {
+    return null;
+  }
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return raw;
+  }
+}
+
+function exportLocalDataPayload() {
+  const data = {};
+  for (const key of LOCAL_DATA_KEYS) {
+    const value = gatherStoredValue(key);
+    if (value !== null) {
+      data[key] = value;
+    }
+  }
+  return {
+    exportedAt: new Date().toISOString(),
+    app: 'nocturne-pwa',
+    keys: data,
+  };
+}
+
+function clearLocalData() {
+  for (const key of LOCAL_DATA_KEYS) {
+    localStorage.removeItem(key);
+  }
+}
+
+function resetUiAfterSessionReset() {
+  state.username = '';
+  state.token = '';
+  state.sessionToken = '';
+  state.permissionState = PERMISSION_STATE.SIGNED_OUT;
+  state.repo = null;
+  state.repoFiles = [];
+  state.repoCommits = [];
+  state.consentData = false;
+  state.consentBle = false;
+  if (state.bleDevice?.gatt?.connected) {
+    state.bleDevice.gatt.disconnect();
+  }
+  state.bleDevice = null;
+  if (els.disconnectDevice) {
+    els.disconnectDevice.disabled = true;
+  }
+  if (els.consentData) {
+    els.consentData.checked = false;
+  }
+  if (els.consentBle) {
+    els.consentBle.checked = false;
+  }
+  if (els.loginForm) {
+    els.loginForm.reset();
+  }
+  els.repoList.textContent = 'Files: none yet.';
+  els.repoCommits.textContent = 'Recent commits: none yet.';
+  setStatus(els.bleStatus, 'No connected device');
+  setStatus(els.repoStatus, 'Signed out');
+  setStatus(els.authStatus, 'Session cleared');
+  setStatus(els.permissionStatus, 'Permission: Signed out');
 }
 
 function setStatus(node, message) {
@@ -103,9 +195,7 @@ function saveSession() {
 
 function clearSession() {
   localStorage.removeItem('nocturne-pwa-session');
-  state.username = '';
-  state.token = '';
-  state.sessionToken = '';
+  resetUiAfterSessionReset();
 }
 
 function setAuthenticated() {
@@ -145,6 +235,75 @@ function getAuthToken() {
   return state.sessionToken || state.token;
 }
 
+function getExchangeEndpoint() {
+  return 'https://api.castalia.institute/nocturne/token-exchange';
+}
+
+function buildGithubEndpoint(path) {
+  return `https://api.github.com/${String(path || '').replace(/^\/+/, '')}`;
+}
+
+function isAllowedNetworkTarget(urlString) {
+  try {
+    const parsed = new URL(urlString);
+    return ALLOWED_REMOTE_HOSTS.includes(parsed.hostname);
+  } catch {
+    return false;
+  }
+}
+
+function formatPermissionState() {
+  const map = {
+    [PERMISSION_STATE.SIGNED_OUT]: 'Permission: Signed out',
+    [PERMISSION_STATE.AUTHENTICATED]: 'Permission: Authenticated (no permissions granted)',
+    [PERMISSION_STATE.DATA_CONSENT_GRANTED]: 'Permission: Repo access granted',
+    [PERMISSION_STATE.BLE_CONSENT_GRANTED]: 'Permission: BLE access granted',
+    [PERMISSION_STATE.FULL_ACCESS]: 'Permission: Repo + BLE access granted',
+  };
+  return map[state.permissionState] || 'Permission: Unknown';
+}
+
+function computePermissionState() {
+  if (!state.username || !state.token) {
+    return PERMISSION_STATE.SIGNED_OUT;
+  }
+  if (state.consentData && state.consentBle) {
+    return PERMISSION_STATE.FULL_ACCESS;
+  }
+  if (state.consentData) {
+    return PERMISSION_STATE.DATA_CONSENT_GRANTED;
+  }
+  if (state.consentBle) {
+    return PERMISSION_STATE.BLE_CONSENT_GRANTED;
+  }
+  return PERMISSION_STATE.AUTHENTICATED;
+}
+
+function enforcePermissionState() {
+  state.permissionState = computePermissionState();
+  setStatus(els.permissionStatus, formatPermissionState());
+}
+
+function requirePermission(context) {
+  if (!state.username || !state.token) {
+    setStatus(els.authStatus, 'Authentication required');
+    return false;
+  }
+  if (context === 'repo' && !state.consentData) {
+    setStatus(els.repoStatus, 'Castalia data consent required');
+    return false;
+  }
+  if (context === 'ble' && !state.consentBle) {
+    setStatus(els.bleStatus, 'BLE consent required');
+    return false;
+  }
+  if (context === 'repo-content' && !state.repo?.full_name) {
+    setStatus(els.repoStatus, 'Repo not resolved');
+    return false;
+  }
+  return true;
+}
+
 function applyConsentGating() {
   const hasAuth = !!state.username && !!state.token;
   const repoEnabled = hasAuth && state.consentData;
@@ -156,16 +315,22 @@ function applyConsentGating() {
   els.listRecentChanges.disabled = !repoEnabled || !state.repo;
   els.connectDevice.disabled = !bleEnabled;
   els.exchangeToken.disabled = !hasAuth;
+  enforcePermissionState();
 }
 
 function onConsentChanged() {
   state.consentData = !!els.consentData.checked;
   state.consentBle = !!els.consentBle.checked;
   applyConsentGating();
-  saveSession();
+  if (state.username) {
+    saveSession();
+  }
 }
 
 async function githubGet(url, token) {
+  if (!isAllowedNetworkTarget(url)) {
+    throw new Error(`Blocked network endpoint: ${url}`);
+  }
   const response = await fetch(url, {
     headers: {
       Accept: 'application/vnd.github+json',
@@ -210,12 +375,7 @@ function formatCommitLines(commits) {
 }
 
 async function onDiscoverRepo() {
-  if (!state.username || !getAuthToken() || !state.consentData) {
-    setStatus(els.repoStatus, 'Please sign in first');
-    return;
-  }
-  if (!state.consentData) {
-    setStatus(els.repoStatus, 'Castalia data consent required');
+  if (!requirePermission('repo')) {
     return;
   }
   els.discoverRepo.disabled = true;
@@ -224,7 +384,7 @@ async function onDiscoverRepo() {
   const repoName = repoNameForUser(state.username);
   const repoSlug = `${state.repoOwner}/${repoName}`;
   try {
-    state.repo = await githubGet(`https://api.github.com/repos/${repoSlug}`, activeToken);
+    state.repo = await githubGet(buildGithubEndpoint(`/repos/${repoSlug}`), activeToken);
     els.openRepo.disabled = false;
     els.listRepoFiles.disabled = false;
     els.listRecentChanges.disabled = false;
@@ -239,18 +399,18 @@ async function onDiscoverRepo() {
 }
 
 function onOpenRepo() {
-  if (!state.consentData || !state.repo?.html_url) return;
+  if (!requirePermission('repo-content')) return;
+  if (!state.repo?.html_url) return;
   window.open(state.repo.html_url, '_blank', 'noopener,noreferrer');
 }
 
 async function onListRepoFiles() {
-  if (!state.consentData || !state.repo?.full_name) {
-    setStatus(els.repoStatus, 'Repo not resolved');
+  if (!requirePermission('repo-content')) {
     return;
   }
   setStatus(els.repoStatus, 'Loading workspace files...');
   try {
-    const apiPath = `https://api.github.com/repos/${state.repo.full_name}/contents`;
+    const apiPath = buildGithubEndpoint(`/repos/${state.repo.full_name}/contents`);
     const items = await githubGet(apiPath, getAuthToken());
     state.repoFiles = Array.isArray(items) ? items : [];
     const fileText = formatRepoListLines(state.repoFiles);
@@ -263,13 +423,12 @@ async function onListRepoFiles() {
 }
 
 async function onListRecentChanges() {
-  if (!state.consentData || !state.repo?.full_name) {
-    setStatus(els.repoStatus, 'Repo not resolved');
+  if (!requirePermission('repo-content')) {
     return;
   }
   setStatus(els.repoStatus, 'Loading recent changes...');
   try {
-    const apiPath = `https://api.github.com/repos/${state.repo.full_name}/commits?per_page=5`;
+    const apiPath = buildGithubEndpoint(`/repos/${state.repo.full_name}/commits?per_page=5`);
     const commits = await githubGet(apiPath, getAuthToken());
     state.repoCommits = Array.isArray(commits) ? commits : [];
     els.repoCommits.textContent = formatCommitLines(state.repoCommits);
@@ -282,25 +441,21 @@ async function onListRecentChanges() {
 
 function onLogout() {
   clearSession();
-  onConsentChanged();
-  els.loginForm.reset();
-  setStatus(els.authStatus, 'Session cleared');
-  setStatus(els.repoStatus, '');
-  setStatus(els.bleStatus, 'No connected device');
-  els.repoList.textContent = 'Files: none yet.';
-  els.repoCommits.textContent = 'Recent commits: none yet.';
-  state.repo = null;
-  setStatus(els.repoStatus, 'Signed out');
+  applyConsentGating();
 }
 
 async function onExchangeToken() {
-  if (!state.username || !state.token) {
+  if (!requirePermission('exchange')) {
     setStatus(els.authStatus, 'Sign in before exchange');
     return;
   }
 
-  const exchangeEndpoint = 'https://api.castalia.institute/nocturne/token-exchange';
+  const exchangeEndpoint = getExchangeEndpoint();
   setStatus(els.authStatus, 'Exchanging token with Castalia...');
+  if (!isAllowedNetworkTarget(exchangeEndpoint)) {
+    setStatus(els.authStatus, 'Exchange endpoint blocked by policy');
+    return;
+  }
   try {
     const response = await fetch(exchangeEndpoint, {
       method: 'POST',
@@ -335,8 +490,7 @@ async function onExchangeToken() {
 }
 
 async function onConnectDevice() {
-  if (!state.consentBle) {
-    setStatus(els.bleStatus, 'BLE consent required');
+  if (!requirePermission('ble')) {
     return;
   }
   if (!('bluetooth' in navigator)) {
@@ -386,6 +540,42 @@ function onOfflineTest() {
   };
   localStorage.setItem('nocturne-offline-snapshot', JSON.stringify(snapshot));
   logLine(`Offline snapshot created: ${snapshot.id}`);
+}
+
+function onExportData() {
+  const payload = exportLocalDataPayload();
+  const payloadKeys = Object.keys(payload.keys);
+  if (payloadKeys.length === 0) {
+    setStatus(els.repoStatus, 'No local data found for export');
+    return;
+  }
+
+  const filename = `nocturne-local-data-${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  link.rel = 'noopener noreferrer';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+  logLine(`Exported local keys: ${payloadKeys.join(', ')}`);
+  setStatus(els.repoStatus, `Exported ${payloadKeys.length} local key(s)`);
+}
+
+function onDeleteData() {
+  if (!window.confirm('Delete local Nocturne data from this browser? This cannot be undone.')) {
+    setStatus(els.repoStatus, 'Delete cancelled');
+    return;
+  }
+  clearLocalData();
+  clearSession();
+  onConsentChanged();
+  setStatus(els.authStatus, 'Local data deleted');
+  setStatus(els.repoStatus, 'All local data removed');
+  logLine('Local Nocturne data deleted');
 }
 
 async function onRegisterServiceWorker() {

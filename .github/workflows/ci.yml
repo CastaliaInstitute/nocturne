@@ -55,3 +55,16 @@ jobs:
       - uses: actions/checkout@v4
       - name: Run core scheduler tests
         run: ./scripts/run-core-tests.sh
+      - name: Run core benchmark suite
+        run: ./scripts/run-core-benchmark.sh
+      - name: Run core profiling suite
+        run: ./scripts/run-core-profiles.sh
+
+  privacy-audit:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run privacy policy audit
+        run: bash ./scripts/run-privacy-audit.sh

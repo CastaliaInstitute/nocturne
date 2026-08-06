@@ -1,0 +1,11 @@
+[package]
+name = "nocturne-sdk"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "nocturne_sdk"
+crate-type = ["cdylib"]
+
+[dependencies]
+libc = "0.2"

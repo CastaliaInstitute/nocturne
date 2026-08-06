@@ -16,6 +16,10 @@ This is a minimal, bootstrap implementation with:
 - Optional Castalia token-exchange attempt
 - Web Bluetooth discovery and connection workflow
 - Offline snapshot dump and service-worker bootstrap
+- Local data controls:
+  - Export local JSON backup
+  - Delete local data with confirmation
+  - Consent-state tracking and policy enforcement scaffolding
 
 ## Security and auth note
 
@@ -25,14 +29,22 @@ storage policies.
 
 ## Deployment and smoke checks
 
-- Host at `https://nocturne.castalia.institute` with HTTPS.
-- CI smoke check: `scripts/pwa-smoke.mjs` is now run by `.github/workflows/ci.yml` via `pwa-smoke`.
+- Production host: `https://nocturne.castalia.institute` (live).
+- Hosting: Cloudflare Workers static assets (`wrangler.toml` at repo root,
+  worker `nocturne-pwa`). The custom domain is a Workers custom domain on the
+  `castalia.institute` zone, which auto-provisions DNS and TLS.
+- Redeploy with `wrangler deploy` from the repo root (requires Cloudflare auth
+  for the account owning the `castalia.institute` zone).
+- CI checks:
+  - `scripts/pwa-smoke.mjs` via `pwa-smoke` job.
+  - `scripts/privacy-audit.mjs` via `privacy-audit` job.
 - Set `vars.NOCTURNE_PWA_URL` in GitHub Actions to enable live hosted URL verification.
 - Smoke checklist:
   - Open app and click **Register Service Worker**.
   - Turn off network and reload to validate cached shell availability.
   - Sign in with test account, enable consent, and resolve repo.
   - Validate **List workspace files** and **Show recent changes** return content.
+  - Validate **Export Local Data** and **Delete Local Data** under Offline and Explainability.
 
 
 ## Run

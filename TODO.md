@@ -81,15 +81,15 @@ Top-level completion condition: treat this repository as "ready for production r
 
 ## Phase 5 — Voice Manager and Acoustic Rendering Contract
 
-- [ ] Define voice abstractions for layers, stems, motifs, and textures
-- [ ] Implement voice lifecycle manager (spawn/retire/cross-fade)
-- [ ] Implement event selection policy from intent and scheduling state
-- [ ] Add spatialization and motion descriptors mapping
-- [ ] Add layering constraints and conflict avoidance
-- [ ] Implement deterministic sample/event RNG seed handling
-- [ ] Add render intent diffing and explainability labels
-- [ ] Add support for muted/low-resource degraded mode
-- [ ] Add render contract tests with expected param outputs
+- [x] Define voice abstractions for layers, stems, motifs, and textures
+- [x] Implement voice lifecycle manager (spawn/retire/cross-fade)
+- [x] Implement event selection policy from intent and scheduling state
+- [x] Add spatialization and motion descriptors mapping
+- [x] Add layering constraints and conflict avoidance
+- [x] Implement deterministic sample/event RNG seed handling
+- [x] Add render intent diffing and explainability labels
+- [x] Add support for muted/low-resource degraded mode
+- [x] Add render contract tests with expected param outputs
 
 ## Phase 6 — DSP and Pack Runtime
 
@@ -129,68 +129,68 @@ Top-level completion condition: treat this repository as "ready for production r
 
 ## Phase 9 — Privacy, Security, and Trust
 
-- [ ] Implement local-first policy enforcement points
-- [ ] Add explicit consent flow and permission state machine
+- [x] Implement local-first policy enforcement points
+- [x] Add explicit consent flow and permission state machine
 - [ ] Add encrypted storage for sensitive context/state
 - [ ] Add key rotation and secure wipe workflow
-- [ ] Add right-to-delete and data export support
+- [x] Add right-to-delete and data export support
 - [ ] Add model portability format and migration path
-- [ ] Add threat-model documentation and security controls matrix
-- [ ] Add data minimization checks and lint guards
-- [ ] Add penetration test checklist and periodic review items
+- [x] Add threat-model documentation and security controls matrix
+- [x] Add data minimization checks and lint guards
+- [x] Add penetration test checklist and periodic review items
 
 ## Phase 10 — Developer SDK and Tooling
 
-- [ ] Define public SDK API and versioned interfaces
-- [ ] Add Rust/C++/Kotlin bindings scaffold as needed
-- [ ] Add adapter plugin interface and sample implementations
+- [x] Define public SDK API and versioned interfaces
+- [x] Add Rust/C++/Kotlin bindings scaffold as needed
+- [x] Add adapter plugin interface and sample implementations
 - [x] Add CLI/inspection tooling:
   - [x] Validate pack metadata
   - [x] Print fused intent timeline
   - [x] Run deterministic playback dry-run
-- [ ] Add code generation templates for new adapters
-- [ ] Add onboarding docs for contributors and integrators
-- [ ] Add examples and mini apps demonstrating each layer
+- [x] Add code generation templates for new adapters
+- [x] Add onboarding docs for contributors and integrators
+- [x] Add examples and mini apps demonstrating each layer
 
 ## Phase 11 — Validation, Testing, and QA
 
-- [ ] Add unit tests for every core module
-- [ ] Add deterministic simulation harness
-- [ ] Add replay-based integration tests for long sessions
-- [ ] Add safety boundary tests for policy and output limits
-- [ ] Add stress tests for missing data and sensor dropout
-- [ ] Add battery and CPU budget profiling
-- [ ] Add cross-device acoustic parity tests where feasible
-- [ ] Add fuzz testing for malformed context streams
-- [ ] Add acceptance test suite for each user mode
-- [ ] Add benchmark suite for startup, frame time, and drift
+- [x] Add unit tests for every core module
+- [x] Add deterministic simulation harness
+- [x] Add replay-based integration tests for long sessions
+- [x] Add safety boundary tests for policy and output limits
+- [x] Add stress tests for missing data and sensor dropout
+- [x] Add battery and CPU budget profiling
+- [x] Add cross-device acoustic parity tests where feasible
+- [x] Add fuzz testing for malformed context streams
+- [x] Add acceptance test suite for each user mode
+- [x] Add benchmark suite for startup, frame time, and drift
 
 ## Phase 12 — Documentation and Reference Content
 
-- [ ] Expand architecture docs to Volumes II-VII
-- [ ] Add API reference docs and sequence diagrams
-- [ ] Add symbol system adapter docs
-- [ ] Add privacy model and deployment guide
-- [ ] Add contributor onboarding guides per discipline
-- [ ] Add release playbooks and rollback instructions
-- [ ] Add user-facing explanation guide for adaptation behavior
-- [ ] Add troubleshooting and known-limits documentation
+- [x] Expand architecture docs to Volumes II-VII
+- [x] Add API reference docs and sequence diagrams
+- [x] Add symbol system adapter docs
+- [x] Add privacy model and deployment guide
+- [x] Add contributor onboarding guides per discipline
+- [x] Add release playbooks and rollback instructions
+- [x] Add user-facing explanation guide for adaptation behavior
+- [x] Add troubleshooting and known-limits documentation
 
 ## Phase 13 — Operational Readiness
 
-- [ ] Set up package and artifact publishing
-- [ ] Set up release automation and changelog generation
-- [ ] Configure CI/CD for multi-platform build matrix
-- [ ] Add monitoring dashboards for crashes and adaptation incidents
-- [ ] Add canary deployment flow for mobile/embedded channels
-- [ ] Add long-term support policy and support matrix
-- [ ] Add project governance, maintainer process, and triage rotation
-- [ ] Define issue labels and sprint cadence
+- [x] Set up package and artifact publishing
+- [x] Set up release automation and changelog generation
+- [x] Configure CI/CD for multi-platform build matrix
+- [x] Add monitoring dashboards for crashes and adaptation incidents
+- [x] Add canary deployment flow for mobile/embedded channels
+- [x] Add long-term support policy and support matrix
+- [x] Add project governance, maintainer process, and triage rotation
+- [x] Define issue labels and sprint cadence
 
 ## Phase 14 — Nocturne PWA Surface
 
-- [ ] Reserve and configure production host `nocturne.castalia.institute`
-- [ ] Stand up HTTPS static hosting and service account for Castalia deployment
+- [x] Reserve and configure production host `nocturne.castalia.institute`
+- [x] Stand up HTTPS static hosting and service account for Castalia deployment
 - [x] Implement secure Castalia authentication flow
 - [x] Implement token exchange and permission model for `castalia-{username}` repos
 - [x] Add repository access UI:
