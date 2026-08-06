@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nocturne — Castalia PWA</title>
+    <meta name="theme-color" content="#0f1220" />
+    <meta name="description" content="Context-aware acoustic control surface for Nocturne." />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="icon-192.png" />
+    <link rel="stylesheet" href="styles.css" />
+    <script defer src="app.js"></script>
+  </head>
+  <body>
+    <header>
+      <h1>Nocturne</h1>
+      <p>Castalia-native controller for acoustic adaptation, rings, and device access.</p>
+      <p class="subtle">Target URL: nocturne.castalia.institute</p>
+    </header>
+
+    <main>
+      <section class="panel" id="auth-panel">
+        <h2>1) Castalia Identity</h2>
+        <form id="login-form">
+          <label>
+            Castalia username
+            <input id="username" autocomplete="username" placeholder="castalia-janedoe" required />
+          </label>
+          <label>
+            Personal access token
+            <input id="token" autocomplete="current-password" type="password" placeholder="ghp_..." required />
+          </label>
+          <button type="submit">Connect to Castalia</button>
+        </form>
+        <p id="auth-status" class="status">Not connected</p>
+      </section>
+
+      <section class="panel">
+        <h2>2) Castalia Repo</h2>
+        <p>After sign in, this app can read/write user-scoped repos named <code>castalia-{username}</code>.</p>
+        <div class="row">
+          <button id="discover-repo" disabled>Discover repo</button>
+          <button id="open-repo" disabled>Open repo in GitHub</button>
+        </div>
+        <p id="repo-status" class="status"></p>
+      </section>
+
+      <section class="panel">
+        <h2>3) WebBLE Ring + Devices</h2>
+        <p>WebBLE access is optional and browser-gated. Use approved Castalia rings/devices.</p>
+        <div class="row">
+          <button id="connect-device" disabled>Connect Ring/Device</button>
+          <button id="disconnect-device" disabled>Disconnect</button>
+        </div>
+        <p id="ble-status" class="status">No connected device</p>
+      </section>
+
+      <section class="panel">
+        <h2>4) Offline and Explainability</h2>
+        <div class="row">
+          <button id="test-offline" type="button">Generate Offline Snapshot</button>
+          <button id="register-sw" type="button">Register Service Worker</button>
+        </div>
+        <pre id="log"></pre>
+      </section>
+    </main>
+
+    <footer>
+      <small>Offline-first by design. Sensitive credentials must be handled by scoped tokens and policy constraints.</small>
+    </footer>
+  </body>
+</html>

@@ -29,6 +29,7 @@ adaptive composition rather than fixed recordings.
 - `platform/` contains platform adapter projects (ESP-IDF, Android, desktop).
 - `samples/` stores acoustic assets, packs, and fixture test materials.
 - `tools/` provides build and validation helpers.
+- `pwa/` hosts the web control surface and installable Nocturne client.
 - `tests/` holds simulation and policy tests.
 
 This first commit is foundational documentation to establish the project structure
@@ -88,3 +89,8 @@ Contributions are expected to follow:
 - Respect for safety limits and privacy policy
 
 See `CONTRIBUTING.md` for details.
+
+## PWA Host
+
+Initial web client scaffold is under `pwa/` for deployment at
+`https://nocturne.castalia.institute`.
