@@ -69,14 +69,14 @@ Top-level completion condition: treat this repository as "ready for production r
 
 ## Phase 4 — Scheduler and Sound Policy
 
-- [ ] Define intent-to-policy mapping rules
-- [ ] Implement scheduler for event density and pacing
-- [ ] Add safety envelopes for loudness, high-frequency content, and novelty
+- [x] Define intent-to-policy mapping rules
+- [x] Implement scheduler for event density and pacing
+- [x] Add safety envelopes for loudness, high-frequency content, and novelty
 - [ ] Implement sleep-safe mode with reduced surprise behavior
 - [ ] Implement transition management with continuity constraints
 - [ ] Add timer, phase, and interruption handling
-- [ ] Add fallback scheduling behavior for missing intent
-- [ ] Add deterministic scheduler traces for reproducibility
+- [x] Add fallback scheduling behavior for missing intent
+- [x] Add deterministic scheduler traces for reproducibility
 - [ ] Add scheduler unit tests and scenario tests
 
 ## Phase 5 — Voice Manager and Acoustic Rendering Contract
@@ -191,16 +191,16 @@ Top-level completion condition: treat this repository as "ready for production r
 
 - [ ] Reserve and configure production host `nocturne.castalia.institute`
 - [ ] Stand up HTTPS static hosting and service account for Castalia deployment
-- [ ] Implement secure Castalia authentication flow
-- [ ] Implement token exchange and permission model for `castalia-{username}` repos
+- [x] Implement secure Castalia authentication flow
+- [x] Implement token exchange and permission model for `castalia-{username}` repos
 - [ ] Add repository access UI:
-  - [ ] discover repo
-  - [ ] list workspace files
-  - [ ] show recent changes
-- [ ] Add WebBLE pairing for ring and device peripherals
-- [ ] Add consent dialogs for BLE and sensor operations
-- [ ] Harden offline mode and install UX
-- [ ] Add onboarding and troubleshooting docs for first-time setup
+  - [x] discover repo
+  - [x] list workspace files
+  - [x] show recent changes
+- [x] Add WebBLE pairing for ring and device peripherals
+- [x] Add consent dialogs for BLE and sensor operations
+- [x] Harden offline mode and install UX
+- [x] Add onboarding and troubleshooting docs for first-time setup
 - [ ] Add app deployment pipeline and smoke tests
 
 ## Tracking

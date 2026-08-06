@@ -11,6 +11,9 @@ Purpose:
 This is a minimal, bootstrap implementation with:
 - Login form for scoped identity/session storage
 - GitHub repo discovery for `castalia-{username}`
+- Consent-gated repository access and BLE/device pairing
+- Repository workspace file + commit browsing
+- Optional Castalia token-exchange attempt
 - Web Bluetooth discovery and connection workflow
 - Offline snapshot dump and service-worker bootstrap
 
@@ -19,6 +22,16 @@ This is a minimal, bootstrap implementation with:
 This scaffold uses an explicit token field for GitHub API access and local storage
 for convenience. Production should use backend token exchange/OAuth and secure
 storage policies.
+
+## Deployment and smoke checks
+
+- Host at `https://nocturne.castalia.institute` with HTTPS.
+- Smoke checklist:
+  - Open app and click **Register Service Worker**.
+  - Turn off network and reload to validate cached shell availability.
+  - Sign in with test account, enable consent, and resolve repo.
+  - Validate **List workspace files** and **Show recent changes** return content.
+
 
 ## Run
 
