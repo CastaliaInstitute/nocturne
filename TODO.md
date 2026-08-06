@@ -17,16 +17,16 @@ Top-level completion condition: treat this repository as "ready for production r
 
 ## Phase 1 — Core Platform Data Models
 
-- [ ] Implement shared context domain models
-- [ ] Implement canonical `AcousticIntent` structure and serde support
-- [ ] Add confidence, bounds, and provenance metadata to intent updates
-- [ ] Add deterministic random-seed and session-seed plumbing
-- [ ] Implement context signal schemas for Observed, Computed, Symbolic, User domains
-- [ ] Add input validation and saturation/smoothing utilities
+- [x] Implement shared context domain models
+- [x] Implement canonical `AcousticIntent` structure and serde support
+- [x] Add confidence, bounds, and provenance metadata to intent updates
+- [x] Add deterministic random-seed and session-seed plumbing
+- [x] Implement context signal schemas for Observed, Computed, Symbolic, User domains
+- [x] Add input validation and saturation/smoothing utilities
 - [ ] Add temporal model with hierarchical chronology utilities
 - [ ] Add serialization format versioning for compatibility
 - [ ] Create golden-test fixtures for intent determinism
-- [ ] Document all core data types in API docs
+- [x] Document all core data types in API docs
 
 ## Phase 2 — Context Adapter Layer
 
