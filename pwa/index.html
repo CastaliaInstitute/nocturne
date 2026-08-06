@@ -2,25 +2,47 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Nocturne — Castalia PWA</title>
-    <meta name="theme-color" content="#0f1220" />
-    <meta name="description" content="Context-aware acoustic control surface for Nocturne." />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Nocturne</title>
+    <meta name="theme-color" content="#05070f" />
+    <meta name="description" content="Nocturne — adaptive ambient sound." />
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="icon-192.png" />
     <link rel="stylesheet" href="styles.css" />
     <script defer src="app.js"></script>
+    <script defer src="ambient.js"></script>
   </head>
   <body>
-    <header>
-      <h1>Nocturne</h1>
-      <p>Castalia-native controller for acoustic adaptation, rings, and device access.</p>
-      <p class="subtle">Target URL: nocturne.castalia.institute</p>
+    <canvas id="scene" aria-hidden="true"></canvas>
+
+    <header class="topbar">
+      <button id="sound-toggle" class="icon-btn" type="button" aria-label="Toggle sound" title="Sound">
+        <svg id="icon-sound-on" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M11 5 6 9H3v6h3l5 4V5z" />
+          <path d="M15.5 8.5a5 5 0 0 1 0 7" />
+          <path d="M18 6a8.5 8.5 0 0 1 0 12" />
+        </svg>
+        <svg id="icon-sound-off" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" hidden>
+          <path d="M11 5 6 9H3v6h3l5 4V5z" />
+          <line x1="22" y1="9" x2="16" y2="15" />
+          <line x1="16" y1="9" x2="22" y2="15" />
+        </svg>
+      </button>
+      <button id="open-connect" class="connect-btn" type="button">Connect to Castalia</button>
     </header>
 
-    <main>
+    <div id="drawer-backdrop" hidden></div>
+
+    <aside id="connect-drawer" aria-hidden="true" aria-label="Castalia connection">
+      <button id="close-drawer" class="icon-btn drawer-close" type="button" aria-label="Close">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+          <line x1="6" y1="6" x2="18" y2="18" />
+          <line x1="18" y1="6" x2="6" y2="18" />
+        </svg>
+      </button>
+
       <section class="panel" id="auth-panel">
-        <h2>1) Castalia Identity</h2>
+        <h2>Castalia Identity</h2>
         <form id="login-form">
           <label>
             Castalia username
@@ -45,7 +67,7 @@
       </section>
 
       <section class="panel">
-        <h2>2) Castalia Repo Access</h2>
+        <h2>Castalia Repo Access</h2>
         <p>After sign-in and consent, the app can discover and read per-user repos: <code>castalia-{username}</code>.</p>
         <div class="row">
           <button id="discover-repo" disabled>Discover repo</button>
@@ -59,7 +81,7 @@
       </section>
 
       <section class="panel">
-        <h2>3) Ring / Sensor BLE + Devices</h2>
+        <h2>Ring / Sensor BLE + Devices</h2>
         <label>
           <input type="checkbox" id="consent-ble" />
           I consent to pairing approved Bluetooth devices and reading sensor characteristics.
@@ -72,7 +94,7 @@
       </section>
 
       <section class="panel">
-        <h2>4) Offline and Explainability</h2>
+        <h2>Offline and Explainability</h2>
         <div class="row">
           <button id="test-offline" type="button">Generate Offline Snapshot</button>
           <button id="register-sw" type="button">Register Service Worker</button>
@@ -81,10 +103,6 @@
         </div>
         <pre id="log"></pre>
       </section>
-    </main>
-
-    <footer>
-      <small>Offline-first by design. Sensitive credentials must be handled by scoped tokens and policy constraints.</small>
-    </footer>
+    </aside>
   </body>
 </html>

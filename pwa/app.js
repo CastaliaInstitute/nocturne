@@ -18,6 +18,82 @@ const LOCAL_DATA_KEYS = [
   'nocturne-offline-snapshot',
 ];
 
+// Shared identity cookie: lets any *.castalia.institute app pick up an
+// existing Castalia login. Holds identity + Castalia session token only —
+// never the raw provider PAT, which stays in this origin's localStorage.
+const CASTALIA_COOKIE = 'castalia_identity';
+
+function castaliaCookieDomain() {
+  const host = window.location.hostname;
+  return host === 'castalia.institute' || host.endsWith('.castalia.institute')
+    ? '.castalia.institute'
+    : '';
+}
+
+function writeCastaliaCookie() {
+  if (!state.username) {
+    return;
+  }
+  const payload = btoa(JSON.stringify({
+    u: state.username,
+    s: state.sessionToken || '',
+    t: Date.now(),
+  }));
+  const domain = castaliaCookieDomain();
+  let cookie = `${CASTALIA_COOKIE}=${payload}; Path=/; Max-Age=2592000; SameSite=Lax`;
+  if (domain) {
+    cookie += `; Domain=${domain}; Secure`;
+  }
+  document.cookie = cookie;
+}
+
+function readCastaliaCookie() {
+  const match = document.cookie
+    .split(';')
+    .map((part) => part.trim())
+    .find((part) => part.startsWith(`${CASTALIA_COOKIE}=`));
+  if (!match) {
+    return null;
+  }
+  try {
+    const parsed = JSON.parse(atob(match.slice(CASTALIA_COOKIE.length + 1)));
+    if (!parsed || typeof parsed.u !== 'string' || !parsed.u) {
+      return null;
+    }
+    return { username: parsed.u, sessionToken: typeof parsed.s === 'string' ? parsed.s : '' };
+  } catch {
+    return null;
+  }
+}
+
+function clearCastaliaCookie() {
+  const domain = castaliaCookieDomain();
+  let cookie = `${CASTALIA_COOKIE}=; Path=/; Max-Age=0; SameSite=Lax`;
+  if (domain) {
+    cookie += `; Domain=${domain}; Secure`;
+  }
+  document.cookie = cookie;
+}
+
+function adoptSharedIdentity() {
+  if (state.username) {
+    return; // local session wins
+  }
+  const shared = readCastaliaCookie();
+  if (!shared) {
+    return;
+  }
+  state.username = shared.username;
+  state.sessionToken = shared.sessionToken;
+  if (els.username) {
+    els.username.value = state.username;
+  }
+  setAuthenticated();
+  applyConsentGating();
+  setStatus(els.authStatus, `Connected as ${state.username} (shared Castalia session)`);
+  logLine(`Adopted shared Castalia identity: ${state.username}`);
+}
+
 const state = {
   username: '',
   token: '',
@@ -75,8 +151,79 @@ function init() {
   els.consentData.addEventListener('change', onConsentChanged);
   els.consentBle.addEventListener('change', onConsentChanged);
 
+  initDrawer();
   loadSession();
+  adoptSharedIdentity();
   onConsentChanged();
+  updateConnectButton();
+  autoRegisterServiceWorker();
+}
+
+function initDrawer() {
+  els.drawer = document.getElementById('connect-drawer');
+  els.drawerBackdrop = document.getElementById('drawer-backdrop');
+  els.openConnect = document.getElementById('open-connect');
+  els.closeDrawer = document.getElementById('close-drawer');
+  if (!els.drawer || !els.openConnect) {
+    return;
+  }
+  els.openConnect.addEventListener('click', openDrawer);
+  els.closeDrawer.addEventListener('click', closeDrawer);
+  els.drawerBackdrop.addEventListener('click', closeDrawer);
+  window.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      closeDrawer();
+    }
+  });
+}
+
+function openDrawer() {
+  if (!els.drawer) return;
+  els.drawerBackdrop.hidden = false;
+  requestAnimationFrame(() => {
+    els.drawerBackdrop.classList.add('visible');
+    els.drawer.classList.add('open');
+  });
+  els.drawer.setAttribute('aria-hidden', 'false');
+  if (!state.username && els.username) {
+    els.username.focus();
+  }
+}
+
+function closeDrawer() {
+  if (!els.drawer) return;
+  els.drawer.classList.remove('open');
+  els.drawerBackdrop.classList.remove('visible');
+  els.drawer.setAttribute('aria-hidden', 'true');
+  setTimeout(() => {
+    if (els.drawerBackdrop && !els.drawerBackdrop.classList.contains('visible')) {
+      els.drawerBackdrop.hidden = true;
+    }
+  }, 400);
+}
+
+function updateConnectButton() {
+  if (!els.openConnect) {
+    return;
+  }
+  if (state.username) {
+    els.openConnect.textContent = state.username;
+    els.openConnect.classList.add('connected');
+  } else {
+    els.openConnect.textContent = 'Connect to Castalia';
+    els.openConnect.classList.remove('connected');
+  }
+}
+
+async function autoRegisterServiceWorker() {
+  if (!('serviceWorker' in navigator)) {
+    return;
+  }
+  try {
+    await navigator.serviceWorker.register('./service-worker.js', { scope: './' });
+  } catch {
+    // Manual registration remains available from the drawer.
+  }
 }
 
 function gatherStoredValue(key) {
@@ -195,7 +342,9 @@ function saveSession() {
 
 function clearSession() {
   localStorage.removeItem('nocturne-pwa-session');
+  clearCastaliaCookie();
   resetUiAfterSessionReset();
+  updateConnectButton();
 }
 
 function setAuthenticated() {
@@ -220,8 +369,10 @@ function onLogin(event) {
   state.consentData = els.consentData.checked;
   state.consentBle = els.consentBle.checked;
   saveSession();
+  writeCastaliaCookie();
   setAuthenticated();
   onLoginStateUpdated();
+  updateConnectButton();
 }
 
 function onLoginStateUpdated() {
@@ -264,7 +415,7 @@ function formatPermissionState() {
 }
 
 function computePermissionState() {
-  if (!state.username || !state.token) {
+  if (!state.username || !getAuthToken()) {
     return PERMISSION_STATE.SIGNED_OUT;
   }
   if (state.consentData && state.consentBle) {
@@ -285,7 +436,7 @@ function enforcePermissionState() {
 }
 
 function requirePermission(context) {
-  if (!state.username || !state.token) {
+  if (!state.username || !getAuthToken()) {
     setStatus(els.authStatus, 'Authentication required');
     return false;
   }
@@ -305,7 +456,7 @@ function requirePermission(context) {
 }
 
 function applyConsentGating() {
-  const hasAuth = !!state.username && !!state.token;
+  const hasAuth = !!state.username && !!getAuthToken();
   const repoEnabled = hasAuth && state.consentData;
   const bleEnabled = hasAuth && state.consentBle && 'bluetooth' in navigator;
 
@@ -478,6 +629,7 @@ async function onExchangeToken() {
     }
     state.sessionToken = data.session_token;
     saveSession();
+    writeCastaliaCookie();
     setStatus(els.authStatus, 'Castalia exchange succeeded');
     logLine('Castalia token exchange succeeded');
     setAuthenticated();

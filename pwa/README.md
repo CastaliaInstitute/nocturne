@@ -8,7 +8,20 @@ Purpose:
 
 ## Current status
 
-This is a minimal, bootstrap implementation with:
+The main surface is an immersive, text-free ambient experience:
+- Generative Web Audio soundscape (drone, slow pad chords, sparse
+  pentatonic bells, soft wind through synthesized reverb) that starts on
+  load or first gesture, with an icon-only mute toggle (`ambient.js`)
+- Audio-reactive canvas visuals: moonlit orb, aurora ribbons, and
+  starfield driven by an analyser node; honors `prefers-reduced-motion`
+- A single **Connect to Castalia** button in the floating header opens a
+  drawer with the full auth/consent/repo/BLE/offline control surface
+- Shared identity cookie `castalia_identity` (Domain `.castalia.institute`)
+  so a Castalia login made on any sibling app "just works" here; it holds
+  identity + Castalia session token only — the provider PAT never leaves
+  this origin's localStorage
+
+The drawer control surface includes:
 - Login form for scoped identity/session storage
 - GitHub repo discovery for `castalia-{username}`
 - Consent-gated repository access and BLE/device pairing
