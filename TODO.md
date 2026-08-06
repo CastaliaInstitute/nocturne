@@ -1,5 +1,7 @@
 # Nocturne TODO
 
+Top-level completion condition: treat this repository as "ready for production release" only when all TODO items in this file are completed.
+
 ## Phase 0 — Foundation
 
 - Establish initial repository defaults
