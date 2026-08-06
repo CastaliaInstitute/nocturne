@@ -38,18 +38,18 @@ Top-level completion condition: treat this repository as "ready for production r
   - [x] Breathing/respiration
   - [x] Ambient light
   - [x] Temperature
-- [ ] Implement computed context adapters:
-  - [ ] Solar and civil-time phase
-  - [ ] Circadian estimation
-  - [ ] Sleep debt estimate
-  - [ ] Sunrise/sunset
-  - [ ] Season and lunar phase
+- [x] Implement computed context adapters:
+  - [x] Solar and civil-time phase
+  - [x] Circadian estimation
+  - [x] Sleep debt estimate
+  - [x] Sunrise/sunset
+  - [x] Season and lunar phase
 - [ ] Implement symbolic adapters:
-  - [ ] Chakra frameworks
-  - [ ] Astrology module
-  - [ ] Ritual calendar module
-  - [ ] Meditation/intention profile module
-- [ ] Add user controls adapter for mode and safety settings
+  - [x] Chakra frameworks
+  - [x] Astrology module
+  - [x] Ritual calendar module
+  - [x] Meditation/intention profile module
+- [x] Add user controls adapter for mode and safety settings
 - [x] Add adapter registration and lifecycle management
 - [x] Add simulation/fake adapters for deterministic tests
 - [x] Add diagnostics for missing/invalid context channels
