@@ -29,12 +29,9 @@ static inline nocturne_context_contribution_t nocturne_build_user_context(const 
     out.schema_version = NOCTURNE_INTENT_SCHEMA_VERSION;
     out.source_domain = NOCTURNE_CONTEXT_USER;
     if (!controls) {
-        out.confidence_cap = 0.5f;
         return out;
     }
 
-    out.confidence_cap = 0.9f;
-    out.smoothing_alpha = controls->sleep_safe_mode ? 0.05f : 0.2f;
     out.brightness.value = controls->user_brightness_bias;
     out.density.value = controls->user_density_cap;
     out.warmth.value = controls->user_warmth_bias;

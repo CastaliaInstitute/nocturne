@@ -46,3 +46,12 @@ jobs:
         env:
           NOCTURNE_PWA_URL: ${{ vars.NOCTURNE_PWA_URL }}
         run: node scripts/pwa-smoke.mjs
+
+  core-tests:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run core scheduler tests
+        run: ./scripts/run-core-tests.sh

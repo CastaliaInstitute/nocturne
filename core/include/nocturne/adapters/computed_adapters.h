@@ -65,10 +65,6 @@ static inline nocturne_context_contribution_t nocturne_build_computed_context(in
     float sunrise = nocturne_compute_sunrise_ratio(solar);
     float lunar = nocturne_compute_lunar_ratio(unix_seconds);
 
-    out.smoothing_alpha = 0.2f;
-    out.confidence_cap = 0.8f;
-    out.domain_count = 4;
-
     out.grounding.value = solar;
     out.brightness.value = circadian;
     out.warmth.value = lunar;

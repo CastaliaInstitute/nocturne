@@ -145,9 +145,9 @@ Top-level completion condition: treat this repository as "ready for production r
 - [ ] Add Rust/C++/Kotlin bindings scaffold as needed
 - [ ] Add adapter plugin interface and sample implementations
 - [ ] Add CLI/inspection tooling:
-  - [ ] Validate pack metadata
-  - [ ] Print fused intent timeline
-  - [ ] Run deterministic playback dry-run
+  - [x] Validate pack metadata
+  - [x] Print fused intent timeline
+  - [x] Run deterministic playback dry-run
 - [ ] Add code generation templates for new adapters
 - [ ] Add onboarding docs for contributors and integrators
 - [ ] Add examples and mini apps demonstrating each layer

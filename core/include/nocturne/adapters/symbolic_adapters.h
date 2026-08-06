@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stdint.h>
 #include <string.h>
 #include "../context.h"
 
@@ -44,8 +45,9 @@ static inline nocturne_context_contribution_t nocturne_build_symbolic_context(no
     nocturne_context_contribution_t out = {0};
     out.schema_version = NOCTURNE_INTENT_SCHEMA_VERSION;
     out.source_domain = NOCTURNE_CONTEXT_SYMBOLIC;
-    out.confidence_cap = bias.confidence;
-    out.smoothing_alpha = 0.1f;
+    out.seed = (uint64_t)(uintptr_t)bias.label;
+    out.session_id = 1;
+    out.monotonic_ms = 0;
     out.grounding.value = bias.weight;
     return out;
 }
