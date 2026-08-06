@@ -77,7 +77,7 @@ Top-level completion condition: treat this repository as "ready for production r
 - [x] Add timer, phase, and interruption handling
 - [x] Add fallback scheduling behavior for missing intent
 - [x] Add deterministic scheduler traces for reproducibility
-- [ ] Add scheduler unit tests and scenario tests
+- [x] Add scheduler unit tests and scenario tests
 
 ## Phase 5 — Voice Manager and Acoustic Rendering Contract
 
@@ -144,7 +144,7 @@ Top-level completion condition: treat this repository as "ready for production r
 - [ ] Define public SDK API and versioned interfaces
 - [ ] Add Rust/C++/Kotlin bindings scaffold as needed
 - [ ] Add adapter plugin interface and sample implementations
-- [ ] Add CLI/inspection tooling:
+- [x] Add CLI/inspection tooling:
   - [x] Validate pack metadata
   - [x] Print fused intent timeline
   - [x] Run deterministic playback dry-run
@@ -193,7 +193,7 @@ Top-level completion condition: treat this repository as "ready for production r
 - [ ] Stand up HTTPS static hosting and service account for Castalia deployment
 - [x] Implement secure Castalia authentication flow
 - [x] Implement token exchange and permission model for `castalia-{username}` repos
-- [ ] Add repository access UI:
+- [x] Add repository access UI:
   - [x] discover repo
   - [x] list workspace files
   - [x] show recent changes
