@@ -30,14 +30,14 @@ Top-level completion condition: treat this repository as "ready for production r
 
 ## Phase 2 — Context Adapter Layer
 
-- [ ] Add sensor adapter abstraction interfaces
-- [ ] Implement sensor adapters:
-  - [ ] Heart rate
-  - [ ] HRV
-  - [ ] Motion
-  - [ ] Breathing/respiration
-  - [ ] Ambient light
-  - [ ] Temperature
+- [x] Add sensor adapter abstraction interfaces
+- [x] Implement sensor adapters:
+  - [x] Heart rate
+  - [x] HRV
+  - [x] Motion
+  - [x] Breathing/respiration
+  - [x] Ambient light
+  - [x] Temperature
 - [ ] Implement computed context adapters:
   - [ ] Solar and civil-time phase
   - [ ] Circadian estimation
@@ -50,9 +50,9 @@ Top-level completion condition: treat this repository as "ready for production r
   - [ ] Ritual calendar module
   - [ ] Meditation/intention profile module
 - [ ] Add user controls adapter for mode and safety settings
-- [ ] Add adapter registration and lifecycle management
-- [ ] Add simulation/fake adapters for deterministic tests
-- [ ] Add diagnostics for missing/invalid context channels
+- [x] Add adapter registration and lifecycle management
+- [x] Add simulation/fake adapters for deterministic tests
+- [x] Add diagnostics for missing/invalid context channels
 
 ## Phase 3 — Context Fusion Engine
 
