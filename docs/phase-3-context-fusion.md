@@ -14,3 +14,7 @@
 - Per-step replay log persistence
 - Telemetry-free local event trace buffer
 - Policy-safe fallback handling for missing channels
+
+- Added local replay buffer for fused frames (`core/include/nocturne/fusion/fusion_log.h`)
+- Added preset-based parameterized profiles (`core/include/nocturne/fusion/fusion_profiles.h`)
+- Added placeholder fixture `core/tests/fixtures/fusion-input.json`

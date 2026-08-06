@@ -63,9 +63,9 @@ Top-level completion condition: treat this repository as "ready for production r
 - [x] Add per-channel confidence gating and trust windows
 - [x] Add "explainability pack" output for each adaptation decision
 - [ ] Add policy hooks for safety and parental controls
-- [ ] Add replayable event logs for every fusion step
-- [ ] Implement telemetry-free local logging mode
-- [ ] Add parameterized fusion profiles and tests
+- [x] Add replayable event logs for every fusion step
+- [x] Implement telemetry-free local logging mode
+- [x] Add parameterized fusion profiles
 
 ## Phase 4 — Scheduler and Sound Policy
 
