@@ -56,12 +56,12 @@ Top-level completion condition: treat this repository as "ready for production r
 
 ## Phase 3 — Context Fusion Engine
 
-- [ ] Implement weighted fusion engine with bounded influence
-- [ ] Add bounded blend weights and anti-dominance safeguards
-- [ ] Add adaptive smoothing and inertia constants
+- [x] Implement weighted fusion engine with bounded influence
+- [x] Add bounded blend weights and anti-dominance safeguards
+- [x] Add adaptive smoothing and inertia constants
 - [ ] Implement conflict-resolution policy when channels disagree
-- [ ] Add per-channel confidence gating and trust windows
-- [ ] Add "explainability pack" output for each adaptation decision
+- [x] Add per-channel confidence gating and trust windows
+- [x] Add "explainability pack" output for each adaptation decision
 - [ ] Add policy hooks for safety and parental controls
 - [ ] Add replayable event logs for every fusion step
 - [ ] Implement telemetry-free local logging mode
