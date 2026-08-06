@@ -44,7 +44,7 @@ Top-level completion condition: treat this repository as "ready for production r
   - [x] Sleep debt estimate
   - [x] Sunrise/sunset
   - [x] Season and lunar phase
-- [ ] Implement symbolic adapters:
+- [x] Implement symbolic adapters:
   - [x] Chakra frameworks
   - [x] Astrology module
   - [x] Ritual calendar module
