@@ -8,12 +8,12 @@
 - Basic explainability entries per intent dimension
 - Basic reproducibility scaffolding through explicit profile inputs
 
-## Pending work in this phase
+## Completed in this pass
 
-- Conflict-resolution policies for contradictory channels
-- Per-step replay log persistence
-- Telemetry-free local event trace buffer
-- Policy-safe fallback handling for missing channels
+- [x] Conflict-resolution policies for contradictory channels
+- [x] Per-step replay log persistence
+- [x] Telemetry-free local event trace buffer
+- [x] Policy-safe fallback handling for missing channels
 
 - Added local replay buffer for fused frames (`core/include/nocturne/fusion/fusion_log.h`)
 - Added preset-based parameterized profiles (`core/include/nocturne/fusion/fusion_profiles.h`)

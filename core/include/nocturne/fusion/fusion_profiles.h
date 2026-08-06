@@ -14,12 +14,13 @@ typedef enum {
 } nocturne_fusion_profile_preset_t;
 
 static inline nocturne_fusion_profile_t nocturne_fusion_profile_for(nocturne_fusion_profile_preset_t preset) {
-    nocturne_fusion_profile_t out = {
-        .anti_dominance_cap = 0.35f,
-        .confidence_floor = 0.2f,
-        .confidence_ceil = 0.95f,
-        .trust_decay_per_cycle = 0.95f,
-    };
+    nocturne_fusion_profile_t out;
+    memset(&out, 0, sizeof(out));
+    out.anti_dominance_cap = 0.35f;
+    out.confidence_floor = 0.2f;
+    out.confidence_ceil = 0.95f;
+    out.conflict_threshold = 0.18f;
+    out.trust_decay_per_cycle = 0.95f;
 
     memset(out.weights, 0, sizeof(out.weights));
 
@@ -27,14 +28,17 @@ static inline nocturne_fusion_profile_t nocturne_fusion_profile_for(nocturne_fus
         out.anti_dominance_cap = 0.22f;
         out.confidence_floor = 0.15f;
         out.trust_decay_per_cycle = 0.9f;
+        out.conflict_threshold = 0.14f;
     } else if (preset == NOCTURNE_FUSION_PROFILE_FOCUS) {
         out.anti_dominance_cap = 0.45f;
         out.confidence_floor = 0.4f;
         out.trust_decay_per_cycle = 0.98f;
+        out.conflict_threshold = 0.12f;
     } else if (preset == NOCTURNE_FUSION_PROFILE_RITUAL) {
         out.anti_dominance_cap = 0.30f;
         out.confidence_floor = 0.3f;
         out.trust_decay_per_cycle = 0.93f;
+        out.conflict_threshold = 0.16f;
     }
 
     for (int i = 0; i < NOCTURNE_INTENT_DIMENSIONS; ++i) {
