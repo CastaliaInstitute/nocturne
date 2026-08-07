@@ -21,7 +21,37 @@
     started: false,
     muted: false,
     timers: [],
+    silentMedia: null,
   };
+
+  const IS_IOS =
+    /iPhone|iPad|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+  // Tiny silent WAV used as a media-element loop. iOS classifies Web Audio
+  // as "ambient" and mutes it with the ring/silent switch; playing any
+  // media element promotes the audio session to "playback", which ignores
+  // the switch.
+  const SILENT_WAV =
+    'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
+
+  function ensurePlaybackSession() {
+    if (!IS_IOS) return;
+    if (navigator.audioSession) {
+      try {
+        navigator.audioSession.type = 'playback';
+      } catch (err) {
+        /* older Safari: fall through to the media-element route */
+      }
+    }
+    if (!engine.silentMedia) {
+      const media = new Audio(SILENT_WAV);
+      media.loop = true;
+      media.setAttribute('playsinline', '');
+      engine.silentMedia = media;
+    }
+    engine.silentMedia.play().catch(() => {});
+  }
 
   // A minor pentatonic across a few octaves — calm, no wrong notes.
   const PENTATONIC = [220.0, 261.63, 293.66, 329.63, 392.0, 440.0, 523.25, 587.33, 659.25];
@@ -253,13 +283,23 @@
   function toggleMute() {
     if (!engine.started) {
       startAudio();
+      ensurePlaybackSession();
+      setSoundIcon(true);
+      return;
+    }
+    if (engine.ctx.state !== 'running' && !engine.muted) {
+      // Audio was blocked rather than muted: treat the tap as "turn on".
+      ensurePlaybackSession();
+      engine.ctx.resume().catch(() => {});
       setSoundIcon(true);
       return;
     }
     engine.muted = !engine.muted;
     if (engine.muted) {
+      if (engine.silentMedia) engine.silentMedia.pause();
       engine.ctx.suspend().catch(() => {});
     } else {
+      ensurePlaybackSession();
       engine.ctx.resume().catch(() => {});
     }
     setSoundIcon(!engine.muted);
@@ -275,17 +315,35 @@
   // Attempt autoplay; fall back to first gesture anywhere on the page.
   function armAutostart() {
     startAudio();
-    const kick = () => {
+    const kick = (event) => {
+      // The sound toggle manages its own state; letting the global unlock
+      // run first would race with it and turn the first tap into a mute.
+      const target = event && event.target;
+      if (target && target.closest && target.closest('#sound-toggle')) return;
       startAudio();
-      if (engine.ctx && engine.ctx.state === 'suspended' && !engine.muted) {
+      ensurePlaybackSession();
+      // 'interrupted' is a non-standard Safari state (phone call, Siri),
+      // so compare against 'running' rather than 'suspended'.
+      if (engine.ctx && engine.ctx.state !== 'running' && !engine.muted) {
         engine.ctx.resume().catch(() => {});
+        // Classic WebKit unlock: play a one-sample buffer inside the gesture.
+        try {
+          const src = engine.ctx.createBufferSource();
+          src.buffer = engine.ctx.createBuffer(1, 1, 22050);
+          src.connect(engine.ctx.destination);
+          src.start(0);
+        } catch (err) {
+          /* ignore */
+        }
       }
     };
-    ['pointerdown', 'keydown', 'touchstart'].forEach((eventName) => {
+    // iOS Safari only treats touchend/click as activation for audio unlock;
+    // keep pointerdown/keydown for other browsers.
+    ['pointerdown', 'touchend', 'click', 'keydown'].forEach((eventName) => {
       window.addEventListener(eventName, kick, { passive: true });
     });
     document.addEventListener('visibilitychange', () => {
-      if (!document.hidden && engine.ctx && engine.ctx.state === 'suspended' && !engine.muted) {
+      if (!document.hidden && engine.ctx && engine.ctx.state !== 'running' && !engine.muted) {
         engine.ctx.resume().catch(() => {});
       }
     });
