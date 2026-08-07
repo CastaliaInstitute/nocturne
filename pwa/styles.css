@@ -13,6 +13,8 @@ body {
   background: #05070f;
   color: #eef3ff;
   overflow: hidden;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 #scene {
@@ -108,9 +110,17 @@ svg[hidden] {
   top: 0;
   right: 0;
   height: 100%;
-  width: min(440px, 100vw);
-  padding: 56px 22px calc(24px + env(safe-area-inset-bottom));
+  height: 100dvh;
+  width: 100%;
+  max-width: 440px;
+  padding: 56px
+    max(22px, env(safe-area-inset-right))
+    calc(24px + env(safe-area-inset-bottom))
+    max(22px, env(safe-area-inset-left));
   overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
   background: linear-gradient(165deg, rgba(10, 14, 30, 0.97), rgba(7, 10, 22, 0.97));
   border-left: 1px solid rgba(90, 108, 180, 0.35);
   z-index: 40;
@@ -172,7 +182,9 @@ input {
   border-radius: 8px;
   background: #0b1223;
   color: #eef3ff;
-  font-size: 14px;
+  /* 16px minimum stops iOS Safari from auto-zooming the page on focus,
+     which left the layout zoomed and clipped off-screen. */
+  font-size: 16px;
 }
 
 button {
@@ -214,6 +226,9 @@ pre {
   border-radius: 8px;
   padding: 10px;
   white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  max-width: 100%;
   min-height: 70px;
   max-height: 180px;
   overflow: auto;
@@ -230,6 +245,26 @@ code {
   padding: 2px 6px;
   border-radius: 6px;
   font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+/* ---- small screens ---- */
+
+@media (max-width: 480px) {
+  #connect-drawer {
+    max-width: none;
+    padding-top: 52px;
+    border-left: 0;
+  }
+
+  .panel {
+    padding: 14px 12px;
+  }
+
+  .row button {
+    flex: 1 1 calc(50% - 4px);
+    min-width: 0;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
