@@ -1,4 +1,4 @@
-const CACHE_NAME = 'nocturne-pwa-v1';
+const CACHE_NAME = 'nocturne-pwa-v2';
 const CACHE_ASSETS = [
   './',
   './index.html',

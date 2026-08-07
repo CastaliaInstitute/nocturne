@@ -56,7 +56,21 @@
       </section>
 
       <section class="panel">
-        <h2>4) Offline and Explainability</h2>
+        <h2>4) Soundscape Playback</h2>
+        <p>Generative nocturne ambience rendered locally with Web Audio. No music library or network needed.</p>
+        <div class="row">
+          <button id="play-audio" type="button">Play Soundscape</button>
+          <button id="stop-audio" type="button" disabled>Stop</button>
+        </div>
+        <label>
+          Volume
+          <input id="volume" type="range" min="0" max="100" value="60" />
+        </label>
+        <p id="audio-status" class="status">Idle. On iPhone, playback must start from a tap and the ringer/silent switch can mute audio on older iOS versions.</p>
+      </section>
+
+      <section class="panel">
+        <h2>5) Offline and Explainability</h2>
         <div class="row">
           <button id="test-offline" type="button">Generate Offline Snapshot</button>
           <button id="register-sw" type="button">Register Service Worker</button>
