@@ -1,0 +1,48 @@
+name: Deploy PWA
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["agent/complete-foundation"]
+    paths:
+      - "pwa/**"
+      - "wrangler.toml"
+      - ".github/workflows/deploy-pwa.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-pwa
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Deploy to Cloudflare Workers
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
+            echo "::error::CLOUDFLARE_API_TOKEN secret is not configured for this repository."
+            exit 1
+          fi
+          npx --yes wrangler@4 deploy
+      - name: Verify live site serves the deployed commit's assets
+        run: |
+          sleep 10
+          for file in styles.css ambient.js app.js index.html; do
+            live_hash=$(curl -sS --max-time 30 "https://nocturne.castalia.institute/${file}?cachebust=${GITHUB_SHA}" | sha256sum | cut -d' ' -f1)
+            repo_hash=$(sha256sum "pwa/${file}" | cut -d' ' -f1)
+            if [ "$live_hash" != "$repo_hash" ]; then
+              echo "::error::Live ${file} does not match repository content after deploy."
+              exit 1
+            fi
+            echo "${file}: OK"
+          done
