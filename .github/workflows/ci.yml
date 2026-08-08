@@ -1,0 +1,87 @@
+name: CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check required repository files
+        run: |
+          set -euo pipefail
+          test -f README.md
+          test -f TODO.md
+          test -f LICENSE
+          test -f CHANGELOG.md
+          test -f docs/architecture/system-architecture-spec.md
+          test -f docs/glossary.md
+          test -f pwa/index.html
+          test -f pwa/app.js
+          test -f pwa/styles.css
+          test -f pwa/manifest.webmanifest
+          test -f pwa/service-worker.js
+
+  pwa-smoke:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Run PWA smoke checks
+        env:
+          NOCTURNE_PWA_URL: ${{ vars.NOCTURNE_PWA_URL }}
+        run: node scripts/pwa-smoke.mjs
+
+  core-tests:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run core scheduler tests
+        run: ./scripts/run-core-tests.sh
+      - name: Run core benchmark suite
+        run: ./scripts/run-core-benchmark.sh
+      - name: Run core profiling suite
+        run: ./scripts/run-core-profiles.sh
+
+  privacy-audit:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run privacy policy audit
+        run: bash ./scripts/run-privacy-audit.sh
+
+  CI:
+    # Summary job matching the required status check name on main.
+    runs-on: ubuntu-latest
+    needs: [docs, pwa-smoke, core-tests, privacy-audit]
+    if: always()
+    steps:
+      - name: Verify all jobs succeeded
+        run: |
+          results='${{ join(needs.*.result, ' ') }}'
+          echo "job results: $results"
+          for r in $results; do
+            if [ "$r" != "success" ]; then
+              echo "::error::One or more required jobs did not succeed."
+              exit 1
+            fi
+          done

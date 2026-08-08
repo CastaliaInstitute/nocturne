@@ -1,0 +1,6 @@
+# Nocturne Adapter Plugin Template
+
+- Copy this directory into your integration source tree.
+- Replace `${PLUGIN_NAME}` and `${PLUGIN_STATE_NAME}` with implementation names.
+- Wire plugin manifest and registration in your host binary.
+- Ensure `NOCTURNE_PLUGIN_API` is defined before including this adapter.

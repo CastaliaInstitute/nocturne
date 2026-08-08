@@ -4,92 +4,92 @@ Top-level completion condition: treat this repository as "ready for production r
 
 ## Phase 0 — Foundation
 
-- [ ] Establish initial repository defaults
-- [ ] Define and enforce language/tooling policy
-- [ ] Add MIT license and contribution governance
-- [ ] Create docs and architecture spec publication structure
-- [ ] Add core design glossary (Acoustic Intent, Chronology, Context Domains)
-- [ ] Define semantic versioning and release cadence
-- [ ] Set up CI pipeline for lint/build/doc checks
-- [ ] Create project-wide issue and PR templates
-- [ ] Add CODEOWNERS and branch protections
-- [ ] Add changelog and release notes policy
+- [x] Establish initial repository defaults
+- [x] Define and enforce language/tooling policy
+- [x] Add MIT license and contribution governance
+- [x] Create docs and architecture spec publication structure
+- [x] Add core design glossary (Acoustic Intent, Chronology, Context Domains)
+- [x] Define semantic versioning and release cadence
+- [x] Set up CI pipeline for lint/build/doc checks
+- [x] Create project-wide issue and PR templates
+- [x] Add CODEOWNERS and branch protections
+- [x] Add changelog and release notes policy
 
 ## Phase 1 — Core Platform Data Models
 
-- [ ] Implement shared context domain models
-- [ ] Implement canonical `AcousticIntent` structure and serde support
-- [ ] Add confidence, bounds, and provenance metadata to intent updates
-- [ ] Add deterministic random-seed and session-seed plumbing
-- [ ] Implement context signal schemas for Observed, Computed, Symbolic, User domains
-- [ ] Add input validation and saturation/smoothing utilities
-- [ ] Add temporal model with hierarchical chronology utilities
-- [ ] Add serialization format versioning for compatibility
-- [ ] Create golden-test fixtures for intent determinism
-- [ ] Document all core data types in API docs
+- [x] Implement shared context domain models
+- [x] Implement canonical `AcousticIntent` structure and serde support
+- [x] Add confidence, bounds, and provenance metadata to intent updates
+- [x] Add deterministic random-seed and session-seed plumbing
+- [x] Implement context signal schemas for Observed, Computed, Symbolic, User domains
+- [x] Add input validation and saturation/smoothing utilities
+- [x] Add temporal model with hierarchical chronology utilities
+- [x] Add serialization format versioning for compatibility
+- [x] Create golden-test fixtures for intent determinism
+- [x] Document all core data types in API docs
 
 ## Phase 2 — Context Adapter Layer
 
-- [ ] Add sensor adapter abstraction interfaces
-- [ ] Implement sensor adapters:
-  - [ ] Heart rate
-  - [ ] HRV
-  - [ ] Motion
-  - [ ] Breathing/respiration
-  - [ ] Ambient light
-  - [ ] Temperature
-- [ ] Implement computed context adapters:
-  - [ ] Solar and civil-time phase
-  - [ ] Circadian estimation
-  - [ ] Sleep debt estimate
-  - [ ] Sunrise/sunset
-  - [ ] Season and lunar phase
-- [ ] Implement symbolic adapters:
-  - [ ] Chakra frameworks
-  - [ ] Astrology module
-  - [ ] Ritual calendar module
-  - [ ] Meditation/intention profile module
-- [ ] Add user controls adapter for mode and safety settings
-- [ ] Add adapter registration and lifecycle management
-- [ ] Add simulation/fake adapters for deterministic tests
-- [ ] Add diagnostics for missing/invalid context channels
+- [x] Add sensor adapter abstraction interfaces
+- [x] Implement sensor adapters:
+  - [x] Heart rate
+  - [x] HRV
+  - [x] Motion
+  - [x] Breathing/respiration
+  - [x] Ambient light
+  - [x] Temperature
+- [x] Implement computed context adapters:
+  - [x] Solar and civil-time phase
+  - [x] Circadian estimation
+  - [x] Sleep debt estimate
+  - [x] Sunrise/sunset
+  - [x] Season and lunar phase
+- [x] Implement symbolic adapters:
+  - [x] Chakra frameworks
+  - [x] Astrology module
+  - [x] Ritual calendar module
+  - [x] Meditation/intention profile module
+- [x] Add user controls adapter for mode and safety settings
+- [x] Add adapter registration and lifecycle management
+- [x] Add simulation/fake adapters for deterministic tests
+- [x] Add diagnostics for missing/invalid context channels
 
 ## Phase 3 — Context Fusion Engine
 
-- [ ] Implement weighted fusion engine with bounded influence
-- [ ] Add bounded blend weights and anti-dominance safeguards
-- [ ] Add adaptive smoothing and inertia constants
-- [ ] Implement conflict-resolution policy when channels disagree
-- [ ] Add per-channel confidence gating and trust windows
-- [ ] Add "explainability pack" output for each adaptation decision
-- [ ] Add policy hooks for safety and parental controls
-- [ ] Add replayable event logs for every fusion step
-- [ ] Implement telemetry-free local logging mode
-- [ ] Add parameterized fusion profiles and tests
+- [x] Implement weighted fusion engine with bounded influence
+- [x] Add bounded blend weights and anti-dominance safeguards
+- [x] Add adaptive smoothing and inertia constants
+- [x] Implement conflict-resolution policy when channels disagree
+- [x] Add per-channel confidence gating and trust windows
+- [x] Add "explainability pack" output for each adaptation decision
+- [x] Add policy hooks for safety and parental controls
+- [x] Add replayable event logs for every fusion step
+- [x] Implement telemetry-free local logging mode
+- [x] Add parameterized fusion profiles
 
 ## Phase 4 — Scheduler and Sound Policy
 
-- [ ] Define intent-to-policy mapping rules
-- [ ] Implement scheduler for event density and pacing
-- [ ] Add safety envelopes for loudness, high-frequency content, and novelty
-- [ ] Implement sleep-safe mode with reduced surprise behavior
-- [ ] Implement transition management with continuity constraints
-- [ ] Add timer, phase, and interruption handling
-- [ ] Add fallback scheduling behavior for missing intent
-- [ ] Add deterministic scheduler traces for reproducibility
-- [ ] Add scheduler unit tests and scenario tests
+- [x] Define intent-to-policy mapping rules
+- [x] Implement scheduler for event density and pacing
+- [x] Add safety envelopes for loudness, high-frequency content, and novelty
+- [x] Implement sleep-safe mode with reduced surprise behavior
+- [x] Implement transition management with continuity constraints
+- [x] Add timer, phase, and interruption handling
+- [x] Add fallback scheduling behavior for missing intent
+- [x] Add deterministic scheduler traces for reproducibility
+- [x] Add scheduler unit tests and scenario tests
 
 ## Phase 5 — Voice Manager and Acoustic Rendering Contract
 
-- [ ] Define voice abstractions for layers, stems, motifs, and textures
-- [ ] Implement voice lifecycle manager (spawn/retire/cross-fade)
-- [ ] Implement event selection policy from intent and scheduling state
-- [ ] Add spatialization and motion descriptors mapping
-- [ ] Add layering constraints and conflict avoidance
-- [ ] Implement deterministic sample/event RNG seed handling
-- [ ] Add render intent diffing and explainability labels
-- [ ] Add support for muted/low-resource degraded mode
-- [ ] Add render contract tests with expected param outputs
+- [x] Define voice abstractions for layers, stems, motifs, and textures
+- [x] Implement voice lifecycle manager (spawn/retire/cross-fade)
+- [x] Implement event selection policy from intent and scheduling state
+- [x] Add spatialization and motion descriptors mapping
+- [x] Add layering constraints and conflict avoidance
+- [x] Implement deterministic sample/event RNG seed handling
+- [x] Add render intent diffing and explainability labels
+- [x] Add support for muted/low-resource degraded mode
+- [x] Add render contract tests with expected param outputs
 
 ## Phase 6 — DSP and Pack Runtime
 
@@ -129,79 +129,79 @@ Top-level completion condition: treat this repository as "ready for production r
 
 ## Phase 9 — Privacy, Security, and Trust
 
-- [ ] Implement local-first policy enforcement points
-- [ ] Add explicit consent flow and permission state machine
+- [x] Implement local-first policy enforcement points
+- [x] Add explicit consent flow and permission state machine
 - [ ] Add encrypted storage for sensitive context/state
 - [ ] Add key rotation and secure wipe workflow
-- [ ] Add right-to-delete and data export support
+- [x] Add right-to-delete and data export support
 - [ ] Add model portability format and migration path
-- [ ] Add threat-model documentation and security controls matrix
-- [ ] Add data minimization checks and lint guards
-- [ ] Add penetration test checklist and periodic review items
+- [x] Add threat-model documentation and security controls matrix
+- [x] Add data minimization checks and lint guards
+- [x] Add penetration test checklist and periodic review items
 
 ## Phase 10 — Developer SDK and Tooling
 
-- [ ] Define public SDK API and versioned interfaces
-- [ ] Add Rust/C++/Kotlin bindings scaffold as needed
-- [ ] Add adapter plugin interface and sample implementations
-- [ ] Add CLI/inspection tooling:
-  - [ ] Validate pack metadata
-  - [ ] Print fused intent timeline
-  - [ ] Run deterministic playback dry-run
-- [ ] Add code generation templates for new adapters
-- [ ] Add onboarding docs for contributors and integrators
-- [ ] Add examples and mini apps demonstrating each layer
+- [x] Define public SDK API and versioned interfaces
+- [x] Add Rust/C++/Kotlin bindings scaffold as needed
+- [x] Add adapter plugin interface and sample implementations
+- [x] Add CLI/inspection tooling:
+  - [x] Validate pack metadata
+  - [x] Print fused intent timeline
+  - [x] Run deterministic playback dry-run
+- [x] Add code generation templates for new adapters
+- [x] Add onboarding docs for contributors and integrators
+- [x] Add examples and mini apps demonstrating each layer
 
 ## Phase 11 — Validation, Testing, and QA
 
-- [ ] Add unit tests for every core module
-- [ ] Add deterministic simulation harness
-- [ ] Add replay-based integration tests for long sessions
-- [ ] Add safety boundary tests for policy and output limits
-- [ ] Add stress tests for missing data and sensor dropout
-- [ ] Add battery and CPU budget profiling
-- [ ] Add cross-device acoustic parity tests where feasible
-- [ ] Add fuzz testing for malformed context streams
-- [ ] Add acceptance test suite for each user mode
-- [ ] Add benchmark suite for startup, frame time, and drift
+- [x] Add unit tests for every core module
+- [x] Add deterministic simulation harness
+- [x] Add replay-based integration tests for long sessions
+- [x] Add safety boundary tests for policy and output limits
+- [x] Add stress tests for missing data and sensor dropout
+- [x] Add battery and CPU budget profiling
+- [x] Add cross-device acoustic parity tests where feasible
+- [x] Add fuzz testing for malformed context streams
+- [x] Add acceptance test suite for each user mode
+- [x] Add benchmark suite for startup, frame time, and drift
 
 ## Phase 12 — Documentation and Reference Content
 
-- [ ] Expand architecture docs to Volumes II-VII
-- [ ] Add API reference docs and sequence diagrams
-- [ ] Add symbol system adapter docs
-- [ ] Add privacy model and deployment guide
-- [ ] Add contributor onboarding guides per discipline
-- [ ] Add release playbooks and rollback instructions
-- [ ] Add user-facing explanation guide for adaptation behavior
-- [ ] Add troubleshooting and known-limits documentation
+- [x] Expand architecture docs to Volumes II-VII
+- [x] Add API reference docs and sequence diagrams
+- [x] Add symbol system adapter docs
+- [x] Add privacy model and deployment guide
+- [x] Add contributor onboarding guides per discipline
+- [x] Add release playbooks and rollback instructions
+- [x] Add user-facing explanation guide for adaptation behavior
+- [x] Add troubleshooting and known-limits documentation
 
 ## Phase 13 — Operational Readiness
 
-- [ ] Set up package and artifact publishing
-- [ ] Set up release automation and changelog generation
-- [ ] Configure CI/CD for multi-platform build matrix
-- [ ] Add monitoring dashboards for crashes and adaptation incidents
-- [ ] Add canary deployment flow for mobile/embedded channels
-- [ ] Add long-term support policy and support matrix
-- [ ] Add project governance, maintainer process, and triage rotation
-- [ ] Define issue labels and sprint cadence
+- [x] Set up package and artifact publishing
+- [x] Set up release automation and changelog generation
+- [x] Configure CI/CD for multi-platform build matrix
+- [x] Add monitoring dashboards for crashes and adaptation incidents
+- [x] Add canary deployment flow for mobile/embedded channels
+- [x] Add long-term support policy and support matrix
+- [x] Add project governance, maintainer process, and triage rotation
+- [x] Define issue labels and sprint cadence
 
 ## Phase 14 — Nocturne PWA Surface
 
-- [ ] Reserve and configure production host `nocturne.castalia.institute`
-- [ ] Stand up HTTPS static hosting and service account for Castalia deployment
-- [ ] Implement secure Castalia authentication flow
-- [ ] Implement token exchange and permission model for `castalia-{username}` repos
-- [ ] Add repository access UI:
-  - [ ] discover repo
-  - [ ] list workspace files
-  - [ ] show recent changes
-- [ ] Add WebBLE pairing for ring and device peripherals
-- [ ] Add consent dialogs for BLE and sensor operations
-- [ ] Harden offline mode and install UX
-- [ ] Add onboarding and troubleshooting docs for first-time setup
-- [ ] Add app deployment pipeline and smoke tests
+- [x] Reserve and configure production host `nocturne.castalia.institute`
+- [x] Stand up HTTPS static hosting and service account for Castalia deployment
+- [x] Implement secure Castalia authentication flow
+- [x] Implement token exchange and permission model for `castalia-{username}` repos
+- [x] Add repository access UI:
+  - [x] discover repo
+  - [x] list workspace files
+  - [x] show recent changes
+- [x] Add WebBLE pairing for ring and device peripherals
+- [x] Add consent dialogs for BLE and sensor operations
+- [x] Harden offline mode and install UX
+- [x] Add onboarding and troubleshooting docs for first-time setup
+- [x] Add app deployment pipeline and smoke tests
 
 ## Tracking
 
