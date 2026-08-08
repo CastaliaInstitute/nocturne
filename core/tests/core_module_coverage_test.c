@@ -67,7 +67,7 @@ static void assert_module_safety_and_sensors(void) {
     nocturne_fusion_conflict_report_t conflict = {0};
 
     const nocturne_safety_result_t safety = nocturne_apply_safety_policy(&frame, &policy, &conflict);
-    assert(safety.count >= 0);
+    assert(safety.count <= NOCTURNE_INTENT_DIMENSIONS);
     assert(frame.intent.novelty <= policy.max_novelty);
 
     nocturne_sensor_adapter_t sensor = nocturne_make_simulated_sensor(NOCTURNE_SENSOR_TEMPERATURE);
