@@ -35,13 +35,8 @@ Bluetooth support.
 ## Domain strategy
 
 - DNS: `nocturne.castalia.institute`
-- Static hosting target should serve:
-  - `pwa/index.html`
-  - `pwa/manifest.webmanifest`
-  - `pwa/service-worker.js`
-  - `pwa/app.js`
-  - `pwa/styles.css`
-
-## Missing assets
-
-- `icon-192.png` and `icon-512.png` placeholders are required before production.
+- Hosting: Cloudflare assets-only Worker `nocturne-pwa` configured by
+  `wrangler.toml` at the repository root, serving this folder (including
+  `_headers` for security and caching policy). See
+  `docs/deployment/cloudflare.md` for the API token secret and deploy
+  pipelines.

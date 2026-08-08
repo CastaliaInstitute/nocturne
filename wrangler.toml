@@ -1,0 +1,13 @@
+name = "nocturne-pwa"
+account_id = "7c25c5f9e0084c02dc7e9e0b30dd4fe7"
+compatibility_date = "2026-08-06"
+
+# Static PWA served from Cloudflare Workers assets.
+# The custom_domain route auto-provisions DNS + TLS for the hostname
+# because castalia.institute is a zone in this Cloudflare account.
+routes = [
+  { pattern = "nocturne.castalia.institute", custom_domain = true }
+]
+
+[assets]
+directory = "./pwa"
