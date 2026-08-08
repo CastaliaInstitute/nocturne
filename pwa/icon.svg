@@ -1,0 +1,52 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="sky" cx="38%" cy="34%" r="90%">
+      <stop offset="0%" stop-color="#232c52"/>
+      <stop offset="45%" stop-color="#131a33"/>
+      <stop offset="100%" stop-color="#05070f"/>
+    </radialGradient>
+    <radialGradient id="moonface" cx="40%" cy="35%" r="80%">
+      <stop offset="0%" stop-color="#f2f5ff"/>
+      <stop offset="60%" stop-color="#ccd5f4"/>
+      <stop offset="100%" stop-color="#aab6e6"/>
+    </radialGradient>
+    <filter id="glow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="14" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="softglow" x="-80%" y="-80%" width="260%" height="260%">
+      <feGaussianBlur stdDeviation="3"/>
+    </filter>
+    <mask id="crescent">
+      <rect width="512" height="512" fill="black"/>
+      <circle cx="232" cy="238" r="118" fill="white"/>
+      <circle cx="286" cy="204" r="104" fill="black"/>
+    </mask>
+  </defs>
+
+  <rect width="512" height="512" fill="url(#sky)"/>
+
+  <!-- stars -->
+  <g fill="#dfe6ff">
+    <circle cx="368" cy="96" r="4.5" opacity="0.95"/>
+    <circle cx="118" cy="110" r="3" opacity="0.8"/>
+    <circle cx="420" cy="180" r="2.6" opacity="0.7"/>
+    <circle cx="88" cy="300" r="2.4" opacity="0.6"/>
+    <circle cx="330" cy="70" r="2" opacity="0.55"/>
+    <circle cx="152" cy="72" r="2" opacity="0.5"/>
+    <circle cx="452" cy="120" r="2" opacity="0.5"/>
+    <path d="M368 82 l3.4 10.6 10.6 3.4 -10.6 3.4 -3.4 10.6 -3.4 -10.6 -10.6 -3.4 10.6 -3.4 z" opacity="0.9"/>
+  </g>
+
+  <!-- sound-wave arcs radiating from the moon -->
+  <g fill="none" stroke="#8fa0e0" stroke-linecap="round" filter="url(#softglow)">
+    <path d="M 322 330 A 130 130 0 0 0 356 246" stroke-width="9" opacity="0.55"/>
+    <path d="M 352 366 A 176 176 0 0 0 398 252" stroke-width="9" opacity="0.38"/>
+    <path d="M 382 402 A 222 222 0 0 0 440 258" stroke-width="9" opacity="0.24"/>
+  </g>
+
+  <!-- crescent moon -->
+  <g filter="url(#glow)">
+    <rect width="512" height="512" fill="url(#moonface)" mask="url(#crescent)"/>
+  </g>
+</svg>
