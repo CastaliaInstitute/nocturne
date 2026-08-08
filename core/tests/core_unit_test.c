@@ -34,9 +34,6 @@ static void test_context_utilities(void) {
 
     require_float_near(nocturne_smooth(1.0f, 3.0f, 0.25f), 1.5f, 0.0001f, "smoothing alpha blend");
 
-    nocturne_context_contribution_t contrib = {0};
-    contrib.grounding.confidence = 0.3f;
-    contrib.brightness.confidence = 0.7f;
     require_true(nocturne_domain_ok(NOCTURNE_CONTEXT_OBSERVED), "observed domain is valid");
     require_true(!nocturne_domain_ok((nocturne_context_domain_t)99), "invalid domain rejected");
 }

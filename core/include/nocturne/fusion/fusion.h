@@ -294,15 +294,6 @@ static inline nocturne_fused_frame_t nocturne_fuse(
 
     float accum[NOCTURNE_INTENT_DIMENSIONS] = {0.0f};
     float source_confidence_sum[NOCTURNE_INTENT_DIMENSIONS] = {0.0f};
-    nocturne_context_domain_t top_domain[NOCTURNE_INTENT_DIMENSIONS];
-    nocturne_context_domain_t runnerup_domain[NOCTURNE_INTENT_DIMENSIONS];
-    float top_signal[NOCTURNE_INTENT_DIMENSIONS] = {-1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f};
-    float runnerup_signal[NOCTURNE_INTENT_DIMENSIONS] = {-1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f};
-
-    for (size_t i = 0; i < NOCTURNE_INTENT_DIMENSIONS; ++i) {
-        top_domain[i] = NOCTURNE_CONTEXT_OBSERVED;
-        runnerup_domain[i] = NOCTURNE_CONTEXT_OBSERVED;
-    }
 
     for (size_t sample_index = 0; sample_index < sample_count; ++sample_index) {
         const nocturne_context_contribution_t* sample = &samples[sample_index];
@@ -314,16 +305,6 @@ static inline nocturne_fused_frame_t nocturne_fuse(
             float weighted = nocturne_weighted_value(sample, d, profile, sample_index, &conf_weight);
             accum[d] += weighted;
             source_confidence_sum[d] += conf_weight;
-
-            if (weighted > top_signal[d]) {
-                runnerup_signal[d] = top_signal[d];
-                runnerup_domain[d] = top_domain[d];
-                top_signal[d] = weighted;
-                top_domain[d] = sample->source_domain;
-            } else if (weighted > runnerup_signal[d]) {
-                runnerup_signal[d] = weighted;
-                runnerup_domain[d] = sample->source_domain;
-            }
         }
     }
 
@@ -459,8 +440,14 @@ static inline nocturne_fusion_result_t nocturne_fuse_with_explainability(
         if (conflict_mitigation_enabled
             && nocturne_apply_conflict_mitigation(i, &((float*)&result.frame.intent)[i], &result.conflict, profile->anti_dominance_cap)) {
             result.entries[i].weighted_value = ((const float*)&result.frame.intent)[i];
+            /* Prefix the existing reason via a copy: snprintf source and
+               destination must not overlap, and precision keeps the
+               combined string within the destination. */
+            char prior_reason[sizeof(result.entries[i].reason)];
+            (void)snprintf(prior_reason, sizeof(prior_reason), "%s", result.entries[i].reason);
             (void)snprintf(result.entries[i].reason, sizeof(result.entries[i].reason),
-                           "conflict mitigation applied: %s", result.entries[i].reason);
+                           "conflict mitigation applied: %.*s",
+                           (int)(sizeof(result.entries[i].reason) - 30), prior_reason);
         }
     }
 

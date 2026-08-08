@@ -1,3 +1,6 @@
+/* Expose clock_gettime/CLOCK_MONOTONIC under -std=c11. */
+#define _POSIX_C_SOURCE 199309L
+
 #include <assert.h>
 #include <math.h>
 #include <stdio.h>
