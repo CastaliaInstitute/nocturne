@@ -5,16 +5,19 @@ on:
     branches: [main]
     paths:
       - 'pwa/**'
-      - 'wrangler.jsonc'
+      - 'wrangler.toml'
       - 'scripts/pwa-smoke.mjs'
       - '.github/workflows/deploy-cloudflare.yml'
   pull_request:
     paths:
       - 'pwa/**'
-      - 'wrangler.jsonc'
+      - 'wrangler.toml'
       - 'scripts/pwa-smoke.mjs'
       - '.github/workflows/deploy-cloudflare.yml'
   workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   smoke:
@@ -31,18 +34,22 @@ jobs:
     needs: smoke
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    concurrency:
+      group: deploy-pwa
+      cancel-in-progress: false
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
       - name: Check Cloudflare credentials
         id: creds
-        run: echo "configured=${{ secrets.CLOUDFLARE_API_TOKEN != '' && secrets.CLOUDFLARE_ACCOUNT_ID != '' }}" >> "$GITHUB_OUTPUT"
-      - name: Deploy with Wrangler
+        run: echo "configured=${{ secrets.CLOUDFLARE_API_TOKEN != '' }}" >> "$GITHUB_OUTPUT"
+      - name: Deploy to Cloudflare Workers
         if: steps.creds.outputs.configured == 'true'
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: npx --yes wrangler@4 deploy
       - name: Skip notice
         if: steps.creds.outputs.configured != 'true'
-        run: echo "CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID secrets not set — skipping deploy. See docs/deployment/cloudflare.md."
+        run: echo "::warning::CLOUDFLARE_API_TOKEN secret not set — skipping deploy. See docs/deployment/cloudflare.md."

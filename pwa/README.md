@@ -35,12 +35,8 @@ Bluetooth support.
 ## Domain strategy
 
 - DNS: `nocturne.castalia.institute`
-- Hosting: Cloudflare assets-only Worker configured by `wrangler.jsonc` at the
-  repository root, serving this folder (including `_headers` for security and
-  caching policy). See `docs/deployment/cloudflare.md` for account setup,
-  CI secrets, and custom-domain attachment.
-
-## Assets
-
-- `icon-192.png` and `icon-512.png` are generated placeholder crescent icons;
-  replace with final branding before public launch.
+- Hosting: Cloudflare assets-only Worker `nocturne-pwa` configured by
+  `wrangler.toml` at the repository root, serving this folder (including
+  `_headers` for security and caching policy). See
+  `docs/deployment/cloudflare.md` for the API token secret and deploy
+  pipelines.

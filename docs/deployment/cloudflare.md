@@ -1,66 +1,60 @@
 # Deploying the Nocturne PWA to Cloudflare
 
-The Nocturne PWA (`pwa/`) is deployed to Cloudflare as an assets-only Worker,
-configured by `wrangler.jsonc` at the repository root. The production host is
-`nocturne.castalia.institute`.
+The Nocturne PWA (`pwa/`) is deployed to Cloudflare as an assets-only Worker
+named `nocturne-pwa`, configured by `wrangler.toml` at the repository root.
+The production host is `nocturne.castalia.institute`, attached as a custom
+domain route in `wrangler.toml` — DNS and TLS are auto-provisioned because
+`castalia.institute` is a zone in the same Cloudflare account (the account ID
+is inline in `wrangler.toml`).
 
-## What the repository already provides
+## The one missing piece: the API token secret
 
-- `wrangler.jsonc` — Worker named `nocturne` serving `pwa/` as static assets
-- `pwa/_headers` — security headers (HSTS, nosniff, frame denial), a
-  Web Bluetooth permissions policy, and `no-cache` on the service worker so
-  updates roll out promptly
-- `pwa/icon-192.png`, `pwa/icon-512.png` — PWA icons referenced by the manifest
-- `scripts/pwa-smoke.mjs` — pre-deploy consistency check for the static bundle
-- `.github/workflows/deploy-cloudflare.yml` — CI pipeline: smoke test on every
-  PR touching the PWA, automatic deploy on pushes to `main`
+CI deploys fail today with:
 
-## One-time Cloudflare account setup
+> `CLOUDFLARE_API_TOKEN secret is not configured for this repository.`
 
-These steps happen in the Cloudflare dashboard and cannot be done from the
-repository:
+To fix it:
 
-1. **Add the zone.** Ensure `castalia.institute` is an active zone on the
-   Cloudflare account (or delegate just the `nocturne` subdomain via a CNAME if
-   the zone lives elsewhere).
-2. **Create an API token.** In *My Profile → API Tokens*, create a token from
-   the **Edit Cloudflare Workers** template, scoped to the account (and zone,
-   for custom-domain attachment).
-3. **Find the account ID.** Shown on the right side of any zone's *Overview*
-   page, or under *Workers & Pages*.
-4. **Add GitHub secrets.** In the repository settings, add:
-   - `CLOUDFLARE_API_TOKEN`
-   - `CLOUDFLARE_ACCOUNT_ID`
+1. In the Cloudflare dashboard, go to *My Profile → API Tokens* and create a
+   token from the **Edit Cloudflare Workers** template, scoped to the account
+   (and the `castalia.institute` zone for custom-domain management).
+2. In the GitHub repository settings, add it as an Actions secret named
+   `CLOUDFLARE_API_TOKEN`.
 
-   Until both secrets exist, the deploy job runs but skips the Wrangler step
-   with a notice, so CI stays green.
-5. **First deploy.** Either push to `main` (with secrets set) or deploy
-   locally:
+No other secret is needed — the account ID is committed in `wrangler.toml`.
 
-   ```bash
-   npx wrangler deploy
-   ```
+## Pipelines
 
-6. **Attach the custom domain.** In *Workers & Pages → nocturne → Settings →
-   Domains & Routes*, add `nocturne.castalia.institute` as a **Custom Domain**.
-   Cloudflare creates the DNS record and certificate automatically when the
-   zone is on the same account.
+- `.github/workflows/deploy-cloudflare.yml` — smoke-tests the bundle on every
+  PR touching the PWA; on pushes to `main` it deploys via `wrangler@4`. If the
+  secret is missing it skips the deploy with a warning instead of failing, so
+  CI stays green until the secret exists.
+- `.github/workflows/deploy-pwa.yml` (on the `agent/complete-foundation`
+  branch) — deploys that branch directly and verifies the live site serves the
+  deployed commit's assets.
+
+Manual deploy from a machine with a token:
+
+```bash
+CLOUDFLARE_API_TOKEN=... npx wrangler@4 deploy
+```
 
 ## Verifying a deploy
 
-- `https://nocturne.castalia.institute/` loads the control surface
+- `https://nocturne.castalia.institute/` loads the app
 - `https://nocturne.castalia.institute/manifest.webmanifest` returns the
   manifest with `Content-Type: application/manifest+json`
 - Response headers include `Strict-Transport-Security` and
-  `Permissions-Policy: bluetooth=(self), ...` (Web Bluetooth requires a secure
-  context; the permissions policy keeps it scoped to the app's own origin)
-- The service worker registers from the *Offline and Explainability* panel and
-  `service-worker.js` is served with `Cache-Control: no-cache`
+  `Permissions-Policy: bluetooth=(self), ...` (from `pwa/_headers`; Web
+  Bluetooth requires a secure context and the policy keeps it scoped to the
+  app's own origin)
+- `service-worker.js` is served with `Cache-Control: no-cache` so client
+  updates roll out promptly
 
 ## Local preview
 
 ```bash
-npx wrangler dev
+npx wrangler@4 dev
 ```
 
 This serves the same bundle Cloudflare will serve, including `_headers`
