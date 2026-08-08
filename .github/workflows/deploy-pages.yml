@@ -2,7 +2,9 @@ name: Deploy PWA to GitHub Pages
 
 on:
   push:
-    branches: [main]
+    # The feature-branch trigger registers this workflow so it can be
+    # dispatched before it lands on main; remove it after merge.
+    branches: [main, claude/cloudflare-tasks-b348mk]
     paths:
       - 'pwa/**'
       - 'scripts/pwa-smoke.mjs'
