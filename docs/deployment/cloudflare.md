@@ -1,4 +1,29 @@
-# Deploying the Nocturne PWA to Cloudflare
+# Deploying the Nocturne PWA
+
+Two hosting paths exist; either can serve `nocturne.castalia.institute`.
+
+## Option A: GitHub Pages (no external credentials needed)
+
+`.github/workflows/deploy-pages.yml` publishes `pwa/` to GitHub Pages using
+only the built-in `GITHUB_TOKEN` — no Cloudflare secret required. It runs on
+pushes to `main` and can be dispatched manually with a `source_ref` input to
+publish another branch's `pwa/` directory.
+
+One-time setup (repository admin):
+
+1. *Settings → Pages → Build and deployment → Source*: **GitHub Actions**.
+   (The workflow attempts to enable this automatically, but the built-in
+   token usually lacks admin permission, so the first run may need this
+   click.)
+2. Optional custom domain: in the same Pages settings, set
+   `nocturne.castalia.institute`, and point that DNS name (currently a
+   Cloudflare Worker custom domain) at `castaliainstitute.github.io` via a
+   CNAME record. Until the custom domain is set, the site lives at
+   `https://castaliainstitute.github.io/nocturne/` — note the manifest's
+   `start_url: "/"` assumes root hosting, so installed-app behavior is only
+   correct once the custom domain is attached.
+
+## Option B: Cloudflare Workers
 
 The Nocturne PWA (`pwa/`) is deployed to Cloudflare as an assets-only Worker
 named `nocturne-pwa`, configured by `wrangler.toml` at the repository root.
