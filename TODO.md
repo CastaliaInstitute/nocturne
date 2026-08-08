@@ -201,7 +201,7 @@ Top-level completion condition: treat this repository as "ready for production r
 - [ ] Add consent dialogs for BLE and sensor operations
 - [ ] Harden offline mode and install UX
 - [ ] Add onboarding and troubleshooting docs for first-time setup
-- [ ] Add app deployment pipeline and smoke tests
+- [x] Add app deployment pipeline and smoke tests (Cloudflare Workers via `wrangler.jsonc` + `.github/workflows/deploy-cloudflare.yml`; account-side setup documented in `docs/deployment/cloudflare.md`)
 
 ## Tracking
 

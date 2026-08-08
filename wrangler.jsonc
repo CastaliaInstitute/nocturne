@@ -1,0 +1,14 @@
+// Cloudflare Workers configuration for the Nocturne PWA.
+// Assets-only deployment: serves the pwa/ directory as static content.
+// Deploy with: npx wrangler deploy
+// Custom domain: nocturne.castalia.institute (see docs/deployment/cloudflare.md)
+{
+  "$schema": "https://unpkg.com/wrangler/config-schema.json",
+  "name": "nocturne",
+  "compatibility_date": "2026-08-01",
+  "assets": {
+    "directory": "./pwa",
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "single-page-application"
+  }
+}
